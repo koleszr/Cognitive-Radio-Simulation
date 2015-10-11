@@ -4,19 +4,25 @@ package hu.bme.cr.entity;
  * 
  * @author Zoltán Koleszár
  * 
- * Models a wireless channel that is used by cognitive radio (CR) devices.
+ * Models a wireless channel that is can be allocated by cognitive radio (CR) devices.
  * 
  *
  */
 public class Channel {
 	
-	// quality of the channel, i.e. transmission rate
+	/**
+	 * Quality of the channel, i.e. transmission rate.
+	 */
 	private double transmissionRate;
 	
-	// starting frequency of the channel
+	/**
+	 * Starting frequency of the channel.
+	 */
 	private double frequency;
 	
-	// defines if the channel is accessed by a primary user (PU)
+	/**
+	 * Defines if the channel is accessed by a primary user (PU).
+	 */
 	private boolean occupied;
 	
 	public Channel(double transmissionRate, double frequency, boolean occupied) {

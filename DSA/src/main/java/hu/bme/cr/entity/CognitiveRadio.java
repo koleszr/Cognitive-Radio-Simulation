@@ -21,11 +21,21 @@ import hu.bme.cr.strategies.IStrategy;
  * Secondary user, cognitive radio and player in this context have the same meaning.
  */
 public class CognitiveRadio {
+	
+	/**
+	 * The amount of time to switch between channel sensing
+	 * and transmission modes.
+	 */
+	public static final double MODE_SWITCH_TIME = 0.05;
 
-	// transmission rate demand of the ith player (CR)
+	/**
+	 * Transmission rate demand of the ith player (CR).
+	 */
 	private double demand;
 	
-	// the number of channels that the ith player can access in a timeslot
+	/**
+	 * The number of channels that the ith player can access in a time slot.
+	 */
 	private int maxChannels;
 	
 	/**
