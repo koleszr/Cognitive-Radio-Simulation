@@ -21,12 +21,6 @@ import hu.bme.cr.strategies.IStrategy;
  * Secondary user, cognitive radio and player in this context have the same meaning.
  */
 public class CognitiveRadio {
-	
-	/**
-	 * The amount of time to switch between channel sensing
-	 * and transmission modes.
-	 */
-	public static final double MODE_SWITCH_TIME = 0.05;
 
 	/**
 	 * Transmission rate demand of the ith player (CR).
@@ -59,12 +53,20 @@ public class CognitiveRadio {
 	 */
 	private List<Boolean> accessDecisions;
 	
+	/**
+	 * List of probabilites that the CognitiveRadio
+	 * captures the channel at subslot w, where
+	 * w = 1, 2, ... W.
+	 */
+	private List<Double> captureProbabilities;
+	
 	
 	private CognitiveRadio(CognitiveRadioBuilder builder) {
 		this.demand = builder.demand;
 		this.maxChannels = builder.maxChannels;
 		this.strategy = builder.strategy;
 		this.accessDecisions = builder.accessDecisions;
+		this.captureProbabilities = builder.captureProbabilities;
 	}
 	
 	/*
@@ -103,6 +105,14 @@ public class CognitiveRadio {
 		this.accessDecisions = accessDecisions;
 	}
 
+	public List<Double> getCaptureProbabilities() {
+		return captureProbabilities;
+	}
+
+	public void setCaptureProbabilities(List<Double> captureProbabilities) {
+		this.captureProbabilities = captureProbabilities;
+	}
+
 
 
 	/**
@@ -118,6 +128,7 @@ public class CognitiveRadio {
 		private int maxChannels;
 		private IStrategy strategy;
 		private List<Boolean> accessDecisions;
+		private List<Double> captureProbabilities;
 		
 		public CognitiveRadioBuilder setDemand(double demand) {
 			this.demand = demand;
@@ -138,9 +149,16 @@ public class CognitiveRadio {
 			this.accessDecisions = accessDecisions;
 			return this;
 		}
+
+		public CognitiveRadioBuilder setCaptureProbabilities(List<Double> captureProbabilities) {
+			this.captureProbabilities = captureProbabilities;
+			return this;
+		}
 		
 		public CognitiveRadio build() {
 			return new CognitiveRadio(this);
 		}
+
+	
 	}
 }

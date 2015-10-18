@@ -2,12 +2,17 @@ package hu.bme.cr.strategies;
 
 import java.util.List;
 
-import hu.bme.cr.entity.Channel;
-import hu.bme.cr.entity.CognitiveRadio;
+import hu.bme.cr.entity.StrategyParameters;
 
 public class MixedStrategy implements IStrategy {
+	
+	private StrategyParameters parameters;
+	
+	public MixedStrategy(StrategyParameters parameters) {
+		this.parameters = parameters;
+	}
 
-	public List<Boolean> decide(CognitiveRadio cognitiveRadio, List<Channel> channels) {
+	public List<Boolean> decide() {
 		// TODO Auto-generated method stub
 		return null;
 	}

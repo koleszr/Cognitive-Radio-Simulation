@@ -2,9 +2,6 @@ package hu.bme.cr.strategies;
 
 import java.util.List;
 
-import hu.bme.cr.entity.Channel;
-import hu.bme.cr.entity.CognitiveRadio;
-
 /**
  * 
  * @author Zoltán Koleszár
@@ -14,13 +11,13 @@ import hu.bme.cr.entity.CognitiveRadio;
  */
 public class CompetitiveStrategy implements IStrategy {
 
-	public List<Boolean> decide(CognitiveRadio cognitiveRadio, List<Channel> channels) {
+	public List<Boolean> decide() {
 			
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
-	private double utility(CognitiveRadio cognitiveRadio, Channel channel) {
+	private double utility() {
 		
 		
 		
