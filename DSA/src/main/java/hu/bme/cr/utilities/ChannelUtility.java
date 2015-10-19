@@ -4,7 +4,6 @@ import static hu.bme.cr.utilities.UtilityConstants.MAX_BACKOFF;
 import static hu.bme.cr.utilities.UtilityConstants.MODE_SWITCH_TIME;
 
 import java.util.List;
-import java.util.Properties;
 
 /**
  * 
@@ -26,9 +25,14 @@ public class ChannelUtility {
 	 * depending of the generated back off time of a CognitiveRadio.
 	 * 
 	 * @param backOff
+	 * @throws IllegalArgumentException - if backOff < 0.0
 	 * @return channel capture probability
 	 */
-	public static double calculateChannelCaptureProbability(double backOff) {
+	public static double calculateChannelCaptureProbability(double backOff) throws IllegalArgumentException {
+		if (backOff < 0.0) {
+			throw new IllegalArgumentException("Back off time is less than 0!");
+		}
+		
 		return 1 - ((backOff + MODE_SWITCH_TIME) / MAX_BACKOFF);
 	}
 	
