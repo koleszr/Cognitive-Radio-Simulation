@@ -36,6 +36,17 @@ The 2nd, faster time scale represents the decision period in which the secondary
 
 The last one is the fastest and it simulates a CSMA medium access, where secondary users who want to access the given channel generate a random back off time and wait while this time has not expired. After the expiration, the players attempt to access the channel if it is empty.
 
+### Strategies
+
+I will use 3 types of strategies for this project:
+* a competitive one which represents the behavior of a selfish user,
+* a cooperative one where every user want to maximize the utility of the whole system,
+* a mixed one where the latter two strategies are mixed.
+
+## Utility function
+
+The utility function has a real valued payoff which represents the performance of the given user.
+It is used in the strategies to decide about the channel access.
 
 ### Bibliography
 
