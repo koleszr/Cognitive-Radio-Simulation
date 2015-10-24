@@ -133,7 +133,6 @@ public class ChannelUtility {
 		
 		double numenator = Math.log(1 + (uCC * lnFP) / sCC);
 		
-		// TODO
 		return (1 - numenator / lnFP);
 	}
 	

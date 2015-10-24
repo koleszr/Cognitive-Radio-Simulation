@@ -2,13 +2,13 @@ package hu.bme.cr.strategies;
 
 import java.util.List;
 
-import hu.bme.cr.entity.StrategyParameters;
+import hu.bme.cr.entity.UtilityFunctionParameters;
 
 public class MixedStrategy implements IStrategy {
 	
-	private StrategyParameters parameters;
+	private UtilityFunctionParameters parameters;
 	
-	public MixedStrategy(StrategyParameters parameters) {
+	public MixedStrategy(UtilityFunctionParameters parameters) {
 		this.parameters = parameters;
 	}
 

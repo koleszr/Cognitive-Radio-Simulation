@@ -58,7 +58,13 @@ public class CognitiveRadio {
 	 * captures the channel at subslot w, where
 	 * w = 1, 2, ... W.
 	 */
-	private List<Double> captureProbabilities;
+	private List<List<Double>> captureProbabilities;
+	
+	/**
+	 * Contention estimate vector for the ith player.
+	 * It stores the user number estimates for each channel. 
+	 */
+	private List<Double> contentions;
 	
 	
 	private CognitiveRadio(CognitiveRadioBuilder builder) {
@@ -67,6 +73,7 @@ public class CognitiveRadio {
 		this.strategy = builder.strategy;
 		this.accessDecisions = builder.accessDecisions;
 		this.captureProbabilities = builder.captureProbabilities;
+		this.contentions = builder.contentions;
 	}
 	
 	/*
@@ -105,14 +112,21 @@ public class CognitiveRadio {
 		this.accessDecisions = accessDecisions;
 	}
 
-	public List<Double> getCaptureProbabilities() {
+	public List<List<Double>> getCaptureProbabilities() {
 		return captureProbabilities;
 	}
 
-	public void setCaptureProbabilities(List<Double> captureProbabilities) {
+	public void setCaptureProbabilities(List<List<Double>> captureProbabilities) {
 		this.captureProbabilities = captureProbabilities;
 	}
 
+	public List<Double> getContentions() {
+		return contentions;
+	}
+
+	public void setContentions(List<Double> contentions) {
+		this.contentions = contentions;
+	}
 
 
 	/**
@@ -128,7 +142,8 @@ public class CognitiveRadio {
 		private int maxChannels;
 		private IStrategy strategy;
 		private List<Boolean> accessDecisions;
-		private List<Double> captureProbabilities;
+		private List<List<Double>> captureProbabilities;
+		private List<Double> contentions;
 		
 		public CognitiveRadioBuilder setDemand(double demand) {
 			this.demand = demand;
@@ -150,8 +165,13 @@ public class CognitiveRadio {
 			return this;
 		}
 
-		public CognitiveRadioBuilder setCaptureProbabilities(List<Double> captureProbabilities) {
+		public CognitiveRadioBuilder setCaptureProbabilities(List<List<Double>> captureProbabilities) {
 			this.captureProbabilities = captureProbabilities;
+			return this;
+		}
+
+		public CognitiveRadioBuilder setContentions(List<Double> contentions) {
+			this.contentions = contentions;
 			return this;
 		}
 		
