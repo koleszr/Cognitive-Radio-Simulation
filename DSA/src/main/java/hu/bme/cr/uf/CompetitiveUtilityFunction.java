@@ -30,18 +30,19 @@ public class CompetitiveUtilityFunction implements IUtilityFunction {
 	public double calculateUtility() throws IllegalArgumentException {
 		List<Boolean> accessDecisions = params.getAccessDecisions();
 		List<Double> contentions = params.getContentions();
-		List<Double> transMissionRates = params.getTransMissionRates();
+		List<Double> transmissionRates = params.getTransMissionRates();
 		
-		if (accessDecisions.size() != contentions.size() || accessDecisions.size() != transMissionRates.size()) {
+		if (accessDecisions.size() != contentions.size() || accessDecisions.size() != transmissionRates.size()) {
 			throw new IllegalArgumentException("Size of access decisions and contentions is not equal!");
 		}
 		
+		int size = transmissionRates.size();
 		double competitiveElement = 0.0;
 		double constantElement = (1 - MODE_SWITCH_TIME / MAX_BACKOFF);
 		
-		for (int i = 0; i < contentions.size(); i++) {
+		for (int i = 0; i < size; i++) {
 			if (accessDecisions.get(i)) {
-				double element1 = transMissionRates.get(i) / ( params.getDemand() * (1 + contentions.get(i)) );
+				double element1 = transmissionRates.get(i) / ( params.getDemand() * (1 + contentions.get(i)) );
 				competitiveElement += element1 * Math.pow(constantElement, contentions.get(i));
 			}
 		}

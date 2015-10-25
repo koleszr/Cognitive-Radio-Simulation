@@ -14,6 +14,12 @@ import hu.bme.cr.entity.UtilityFunctionParameters;
  * Represents a utility function of a user,
  * which plays competitive and cooperative
  * strategies simultaneously.
+ * 
+ * With the rate1, rate2 and rate3 parameters can the client 
+ * set the behavior of the player, i.e. a more cooperative or
+ * a more competitive behavior.
+ * In case of rate2 = 0 and rate3 = 0, the client can use the
+ * CompetitiveUtilityFunction implementation.
  */
 public class MixedUtilityFunction implements IUtilityFunction {
 	
