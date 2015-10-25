@@ -39,33 +39,6 @@ public class ChannelUtilityTest {
 		channelCaptures.add(true);
 		
 		assertEquals(2.9432, ChannelUtility.calculateUserEstimate(channelCaptures, probabilities), 0.1);
-		
-		probabilities.clear();
-		channelCaptures.clear();
-		
-		probabilities.add(0.22);
-		probabilities.add(0.56);
-		probabilities.add(0.78);
-		probabilities.add(0.12);
-		probabilities.add(0.87);
-		probabilities.add(0.66);
-		probabilities.add(0.49);
-		probabilities.add(0.33);
-		probabilities.add(0.91);
-		probabilities.add(0.28);
-		
-		channelCaptures.add(false);
-		channelCaptures.add(false);
-		channelCaptures.add(true);
-		channelCaptures.add(false);
-		channelCaptures.add(true);
-		channelCaptures.add(false);
-		channelCaptures.add(false);
-		channelCaptures.add(false);
-		channelCaptures.add(true);
-		channelCaptures.add(false);
-		
-		assertEquals(3.802, ChannelUtility.calculateUserEstimate(channelCaptures, probabilities), 0.05);
 	}
 	
 	/**

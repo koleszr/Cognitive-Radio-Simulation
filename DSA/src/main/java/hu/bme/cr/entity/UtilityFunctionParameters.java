@@ -10,11 +10,17 @@ import java.util.List;
  * 
  */
 public class UtilityFunctionParameters {
-	
-	private List<Double> transMissionRates;
 	private double demand;
+	private double rate1;
+	private double rate2;
+	private double rate3;
+	private double kappa;
+
+	private List<Double> transMissionRates;
 	private List<Boolean> accessDecisions;
 	private List<Double> contentions;
+	private List<Double> captureProbabilities;
+	private List<Double> collisionProbabilities;
 	
 	
 	public UtilityFunctionParameters(UtilityFunctionParametersBuilder builder) {
@@ -22,6 +28,12 @@ public class UtilityFunctionParameters {
 		this.demand = builder.demand;
 		this.contentions = builder.contentions;
 		this.accessDecisions = builder.accessDecisions;
+		this.rate1 = builder.rate1;
+		this.rate2 = builder.rate2;
+		this.rate3 = builder.rate3;
+		this.kappa = builder.kappa;
+		this.captureProbabilities = builder.captureProbabilities;
+		this.collisionProbabilities = builder.collisionProbabilities;
 	}
 	
 	
@@ -58,6 +70,54 @@ public class UtilityFunctionParameters {
 		this.contentions = contentions;
 	}
 
+	public double getRate1() {
+		return rate1;
+	}
+
+	public void setRate1(double rate1) {
+		this.rate1 = rate1;
+	}
+
+	public double getRate2() {
+		return rate2;
+	}
+
+	public void setRate2(double rate2) {
+		this.rate2 = rate2;
+	}
+
+	public double getRate3() {
+		return rate3;
+	}
+
+	public void setRate3(double rate3) {
+		this.rate3 = rate3;
+	}
+
+	public double getKappa() {
+		return kappa;
+	}
+
+	public void setKappa(double kappa) {
+		this.kappa = kappa;
+	}
+
+	public List<Double> getCaptureProbabilities() {
+		return captureProbabilities;
+	}
+
+	public void setCaptureProbabilities(List<Double> captureProbabilities) {
+		this.captureProbabilities = captureProbabilities;
+	}
+
+	public List<Double> getCollisionProbabilities() {
+		return collisionProbabilities;
+	}
+
+	public void setCollisionProbabilities(List<Double> collisionProbabilities) {
+		this.collisionProbabilities = collisionProbabilities;
+	}
+
 
 	/**
 	 * 
@@ -67,10 +127,17 @@ public class UtilityFunctionParameters {
 	 * 
 	 */
 	public static class UtilityFunctionParametersBuilder {
-		private List<Double> transMissionRates;
 		private double demand;
+		private double rate1;
+		private double rate2;
+		private double rate3;
+		private double kappa;
+		
+		private List<Double> transMissionRates;
 		private List<Double> contentions;
 		private List<Boolean> accessDecisions;
+		private List<Double> captureProbabilities;
+		private List<Double> collisionProbabilities;
 		
 		public UtilityFunctionParametersBuilder setTransMissionRates(List<Double> transMissionRates) {
 			this.transMissionRates = transMissionRates;
@@ -89,6 +156,36 @@ public class UtilityFunctionParameters {
 
 		public UtilityFunctionParametersBuilder setAccessDecisions(List<Boolean> accessDecisions) {
 			this.accessDecisions = accessDecisions;
+			return this;
+		}
+		
+		public UtilityFunctionParametersBuilder setRate1(double rate1) {
+			this.rate1 = rate1;
+			return this;
+		}
+
+		public UtilityFunctionParametersBuilder setRate2(double rate2) {
+			this.rate2 = rate2;
+			return this;
+		}
+
+		public UtilityFunctionParametersBuilder setRate3(double rate3) {
+			this.rate3 = rate3;
+			return this;
+		}
+
+		public UtilityFunctionParametersBuilder setKappa(double kappa) {
+			this.kappa = kappa;
+			return this;
+		}
+
+		public UtilityFunctionParametersBuilder setCaptureProbabilities(List<Double> captureProbabilities) {
+			this.captureProbabilities = captureProbabilities;
+			return this;
+		}
+
+		public UtilityFunctionParametersBuilder setCollisionProbabilities(List<Double> collisionProbabilities) {
+			this.collisionProbabilities = collisionProbabilities;
 			return this;
 		}
 
