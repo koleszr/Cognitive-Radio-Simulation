@@ -1,4 +1,4 @@
-package hu.bme.cr.entity;
+package hu.bme.cr.uf;
 
 import java.util.List;
 

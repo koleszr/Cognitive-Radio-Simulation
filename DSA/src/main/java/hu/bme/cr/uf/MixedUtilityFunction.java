@@ -5,8 +5,6 @@ import static hu.bme.cr.utilities.UtilityConstants.MODE_SWITCH_TIME;
 
 import java.util.List;
 
-import hu.bme.cr.entity.UtilityFunctionParameters;
-
 /**
  * 
  * @author Zoltán Koleszár

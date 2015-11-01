@@ -66,7 +66,27 @@ public class CognitiveRadio {
 	 */
 	private List<Double> contentions;
 	
+	/**
+	 * We have to know the utilities of every strategies
+	 * from the strategy space (those which the Cognitive Radio
+	 * didn't play as well) to implement the regret tracking
+	 * algorithm.
+	 */
+	private List<Double> utilities;
 	
+	/**
+	 * Strategy space of the user, which is calculated
+	 * by the StrategySpace class. It is given by the
+	 * maximal number of channels that the user can access,
+	 * i.e. maxChannels.
+	 */
+	private List<List<Boolean>> strategySpace;
+	
+	/**
+	 * Constructor that uses the services of its Builder class.
+	 * 
+	 * @param builder
+	 */
 	private CognitiveRadio(CognitiveRadioBuilder builder) {
 		this.demand = builder.demand;
 		this.maxChannels = builder.maxChannels;
@@ -74,6 +94,8 @@ public class CognitiveRadio {
 		this.accessDecisions = builder.accessDecisions;
 		this.captureProbabilities = builder.captureProbabilities;
 		this.contentions = builder.contentions;
+		this.utilities = builder.utilities;
+		this.strategySpace = builder.strategySpace;
 	}
 	
 	/*
@@ -128,6 +150,22 @@ public class CognitiveRadio {
 		this.contentions = contentions;
 	}
 
+	public List<Double> getUtilities() {
+		return utilities;
+	}
+
+	public void setUtilities(List<Double> utilities) {
+		this.utilities = utilities;
+	}
+
+	public List<List<Boolean>> getStrategySpace() {
+		return strategySpace;
+	}
+
+	public void setStrategySpace(List<List<Boolean>> strategySpace) {
+		this.strategySpace = strategySpace;
+	}
+
 
 	/**
 	 * 
@@ -144,6 +182,8 @@ public class CognitiveRadio {
 		private List<Boolean> accessDecisions;
 		private List<List<Double>> captureProbabilities;
 		private List<Double> contentions;
+		private List<Double> utilities;
+		private List<List<Boolean>> strategySpace;
 		
 		public CognitiveRadioBuilder setDemand(double demand) {
 			this.demand = demand;
@@ -172,6 +212,16 @@ public class CognitiveRadio {
 
 		public CognitiveRadioBuilder setContentions(List<Double> contentions) {
 			this.contentions = contentions;
+			return this;
+		}
+		
+		public CognitiveRadioBuilder setUtilities(List<Double> utilities) {
+			this.utilities = utilities;
+			return this;
+		}
+		
+		public CognitiveRadioBuilder setStrategySpace(List<List<Boolean>> strategySpace) {
+			this.strategySpace = strategySpace;
 			return this;
 		}
 		

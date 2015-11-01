@@ -2,7 +2,6 @@ package hu.bme.cr.uf;
 
 import java.util.List;
 
-import hu.bme.cr.entity.UtilityFunctionParameters;
 import static hu.bme.cr.utilities.UtilityConstants.*;
 
 /**
