@@ -16,6 +16,9 @@ public class StrategyParameters {
 	
 	private int strategyIndex;
 	
+	// size of the strategy space
+	private int size;
+	
 	/**
 	 * Constructor for IStrategy implementation input and output.
 	 * 
@@ -24,6 +27,7 @@ public class StrategyParameters {
 	 * <li>utilities: payoff of each strategy at period t - 1</li>
 	 * <li>regrets: mean regret of each strategy at period t - 1</li>
 	 * <li>strategyIndex: the index of the strategy that was used at period t - 1</li>
+	 * <li>size: size of the strategy space</li>
 	 * </ul>
 	 * 
 	 * Used as output:
@@ -31,16 +35,20 @@ public class StrategyParameters {
 	 * <li>utilities: empty list</li>
 	 * <li>regrets: mean regret of each strategy at period t</li>
 	 * <li>strategyIndex: the index of the strategy that was used at period t</li>
+	 * <li>size: 0</li>
 	 * </ul>
 	 * In case of using as output the regrets and decisions must be set.
 	 * 
 	 * @param utilities
 	 * @param regrets
+	 * @param strategyIndex
+	 * @param size
 	 */
-	public StrategyParameters(List<Double> utilities, List<Double> regrets, int strategyIndex) {
+	public StrategyParameters(List<Double> utilities, List<Double> regrets, int strategyIndex, int size) {
 		this.utilities = utilities;
 		this.regrets = regrets;
 		this.strategyIndex = strategyIndex;
+		this.size = size;
 	}
 
 	/*
@@ -69,5 +77,13 @@ public class StrategyParameters {
 
 	public void setStrategyIndex(int strategyIndex) {
 		this.strategyIndex = strategyIndex;
+	}
+
+	public int getSize() {
+		return size;
+	}
+
+	public void setSize(int size) {
+		this.size = size;
 	}
 }
