@@ -19,6 +19,10 @@ public class StrategyParameters {
 	// size of the strategy space
 	private int size;
 	
+	public StrategyParameters() {
+		
+	}
+	
 	/**
 	 * Constructor for IStrategy implementation input and output.
 	 * 

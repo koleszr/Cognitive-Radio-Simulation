@@ -16,7 +16,7 @@ public interface IStrategy {
 	
 	int decideInInitPhase(int max);
 	
-	StrategyParameters decideInSetPhase();
+	StrategyParameters decideInSetPhase(StrategyParameters params);
 
-	StrategyParameters decide();
+	StrategyParameters decide(StrategyParameters params);
 }

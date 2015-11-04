@@ -8,12 +8,9 @@ import java.util.stream.Collectors;
 
 public class RegretTrackingStrategy implements IStrategy {
 	
-	private StrategyParameters parameters;
-	
 	private double stepSize;
 	
-	public RegretTrackingStrategy(StrategyParameters parameters, double stepSize) {
-		this.parameters = parameters;
+	public RegretTrackingStrategy(double stepSize) {
 		this.stepSize = stepSize;
 	}
 
@@ -38,9 +35,9 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * @return index of the strategy to play in the next decision period
 	 */
 	@Override
-	public StrategyParameters decideInSetPhase() {
+	public StrategyParameters decideInSetPhase(StrategyParameters params) {
 		// 1. caclculate the instantaneous regret list
-		List<Double> instRegret = calcInstantaneousRegrets();	
+		List<Double> instRegret = calcInstantaneousRegrets(params);	
 		
 		return new StrategyParameters(Collections.emptyList(), instRegret, instRegret.indexOf(Collections.max(instRegret)), 0);
 	}
@@ -51,24 +48,24 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * @return 
 	 */
 	@Override
-	public StrategyParameters decide() {
+	public StrategyParameters decide(StrategyParameters params) {
 		// 1. calculate channel access probabilities
-		double utilityMax = Collections.max(parameters.getUtilities());
-		double utilityMin = Collections.min(parameters.getUtilities());
-		double m = (parameters.getSize() - 1) * (utilityMax - utilityMin);
+		double utilityMax = Collections.max(params.getUtilities());
+		double utilityMin = Collections.min(params.getUtilities());
+		double m = (params.getSize() - 1) * (utilityMax - utilityMin);
 		
-		List<Double> probabilities = new ArrayList<>(parameters.getRegrets().size());
+		List<Double> probabilities = new ArrayList<>(params.getRegrets().size());
 		
-		for (int i = 0; i < parameters.getRegrets().size(); i++) {
-			if (i == parameters.getStrategyIndex()) {
-				probabilities.add(1 - (calcSameStPr() / m));
+		for (int i = 0; i < params.getRegrets().size(); i++) {
+			if (i == params.getStrategyIndex()) {
+				probabilities.add(1 - (calcSameStPr(params) / m));
 			}
 			else {
-				probabilities.add(calcDiffStPr(i) / m);
+				probabilities.add(calcDiffStPr(params, i) / m);
 			}
 		}
 		
-		return new StrategyParameters(Collections.emptyList(), updateRegret(), probabilities.indexOf(Collections.max(probabilities)), 0);
+		return new StrategyParameters(Collections.emptyList(), updateRegret(params), probabilities.indexOf(Collections.max(probabilities)), 0);
 	}
 	
 	/**
@@ -76,14 +73,14 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return instantaneous regret list
 	 */
-	private List<Double> calcInstantaneousRegrets() {
-		int size = parameters.getUtilities().size();
-		double utility = parameters.getUtilities().get(parameters.getStrategyIndex());
+	private List<Double> calcInstantaneousRegrets(StrategyParameters params) {
+		int size = params.getUtilities().size();
+		double utility = params.getUtilities().get(params.getStrategyIndex());
 		
 		List<Double> instRegret = new ArrayList<>(size);
 		
 		for (int i = 0; i < size; i++) {
-			instRegret.add(parameters.getUtilities().get(i) - utility);
+			instRegret.add(params.getUtilities().get(i) - utility);
 		}
 		return instRegret;
 	}
@@ -94,9 +91,9 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return
 	 */
-	private double calcSameStPr() {
-		List<Double> regrets = new ArrayList<>(parameters.getRegrets());
-		regrets.remove(parameters.getStrategyIndex());
+	private double calcSameStPr(StrategyParameters params) {
+		List<Double> regrets = new ArrayList<>(params.getRegrets());
+		regrets.remove(params.getStrategyIndex());
 		regrets = regrets
 					.stream()
 					.filter(p -> p > 0.0)
@@ -117,8 +114,8 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return
 	 */
-	private double calcDiffStPr(int i) {
-		return Math.max(0, parameters.getRegrets().get(i));
+	private double calcDiffStPr(StrategyParameters params, int i) {
+		return Math.max(0, params.getRegrets().get(i));
 	}
 	
 	/**
@@ -126,17 +123,17 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return updated mean regret list
 	 */
-	private List<Double> updateRegret() {
-		List<Double> updatedRegrets = new ArrayList<>(parameters.getRegrets().size());
+	private List<Double> updateRegret(StrategyParameters params) {
+		List<Double> updatedRegrets = new ArrayList<>(params.getRegrets().size());
 		
-		List<Double> instRegrets = calcInstantaneousRegrets();
+		List<Double> instRegrets = calcInstantaneousRegrets(params);
 		
-		if (parameters.getRegrets().size() != instRegrets.size()) {
+		if (params.getRegrets().size() != instRegrets.size()) {
 			throw new IllegalArgumentException("Not equal list sizes!");
 		}
 		
 		for (int i = 0; i < instRegrets.size(); i++) {
-			double oldRegret = parameters.getRegrets().get(i);
+			double oldRegret = params.getRegrets().get(i);
 			double regret = oldRegret + stepSize * (instRegrets.get(i) - oldRegret); 
 			updatedRegrets.add(regret);
 		}
