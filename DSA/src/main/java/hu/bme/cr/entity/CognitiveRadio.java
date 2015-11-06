@@ -3,6 +3,8 @@ package hu.bme.cr.entity;
 import java.util.List;
 
 import hu.bme.cr.strategies.IStrategy;
+import hu.bme.cr.strategies.StrategyParameters;
+import hu.bme.cr.uf.IUtilityFunction;
 
 /**
  * 
@@ -33,7 +35,7 @@ public class CognitiveRadio {
 	private int maxChannels;
 	
 	/**
-	 * the strategy played by the ith player, which can be:
+	 * The strategy played by the ith player, which can be:
 	 * <ul>
 	 * 	<li>competitive</li>
 	 * 	<li>cooperative</li>
@@ -41,6 +43,11 @@ public class CognitiveRadio {
 	 * </ul>
 	 */
 	private IStrategy strategy;
+	
+	/**
+	 * Utility function to calculate the payoff of the given channel.
+	 */
+	private IUtilityFunction utilityFunction;
 	
 	/**
 	 * Channel access decision vector of the ith player.
@@ -75,6 +82,11 @@ public class CognitiveRadio {
 	private List<Double> utilities;
 	
 	/**
+	 * The mean regret of each channel.
+	 */
+	private List<Double> regrets;
+	
+	/**
 	 * Strategy space of the user, which is calculated
 	 * by the StrategySpace class. It is given by the
 	 * maximal number of channels that the user can access,
@@ -91,11 +103,28 @@ public class CognitiveRadio {
 		this.demand = builder.demand;
 		this.maxChannels = builder.maxChannels;
 		this.strategy = builder.strategy;
+		this.utilityFunction = builder.utilityFunction;
 		this.accessDecisions = builder.accessDecisions;
 		this.captureProbabilities = builder.captureProbabilities;
 		this.contentions = builder.contentions;
 		this.utilities = builder.utilities;
+		this.regrets = builder.regrets;
 		this.strategySpace = builder.strategySpace;
+	}
+	
+	// TODO
+	public void playInitPhase(int max) {
+		strategy.decideInInitPhase(max);
+	}
+	
+	// TODO
+	public void playSetPhase(StrategyParameters params) {
+		strategy.decideInSetPhase(params);
+	}
+	
+	// TODO
+	public void play(StrategyParameters params) {
+		strategy.decide(params);
 	}
 	
 	/*
@@ -166,6 +195,22 @@ public class CognitiveRadio {
 		this.strategySpace = strategySpace;
 	}
 
+	public List<Double> getRegrets() {
+		return regrets;
+	}
+
+	public void setRegrets(List<Double> regrets) {
+		this.regrets = regrets;
+	}
+
+	public IUtilityFunction getUtilityFunction() {
+		return utilityFunction;
+	}
+
+	public void setUtilityFunction(IUtilityFunction utilityFunction) {
+		this.utilityFunction = utilityFunction;
+	}
+
 
 	/**
 	 * 
@@ -179,10 +224,12 @@ public class CognitiveRadio {
 		private double demand;
 		private int maxChannels;
 		private IStrategy strategy;
+		private IUtilityFunction utilityFunction;
 		private List<Boolean> accessDecisions;
 		private List<List<Double>> captureProbabilities;
 		private List<Double> contentions;
 		private List<Double> utilities;
+		private List<Double> regrets;
 		private List<List<Boolean>> strategySpace;
 		
 		public CognitiveRadioBuilder setDemand(double demand) {
@@ -192,6 +239,11 @@ public class CognitiveRadio {
 		
 		public CognitiveRadioBuilder setMaxChannels(int maxChannels) {
 			this.maxChannels = maxChannels;
+			return this;
+		}
+		
+		public CognitiveRadioBuilder setUtilityFunction(IUtilityFunction utilityFunction) {
+			this.utilityFunction = utilityFunction;
 			return this;
 		}
 		
@@ -222,6 +274,11 @@ public class CognitiveRadio {
 		
 		public CognitiveRadioBuilder setStrategySpace(List<List<Boolean>> strategySpace) {
 			this.strategySpace = strategySpace;
+			return this;
+		}
+		
+		public CognitiveRadioBuilder setRegrets(List<Double> regrets) {
+			this.regrets = regrets;
 			return this;
 		}
 		
