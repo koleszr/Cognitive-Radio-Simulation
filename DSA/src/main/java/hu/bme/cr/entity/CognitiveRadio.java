@@ -68,6 +68,12 @@ public class CognitiveRadio {
 	private List<List<Double>> captureProbabilities;
 	
 	/**
+	 * List whether the CognitiveRadio captured
+	 * the channel at subslot w.
+	 */
+	private List<List<Boolean>> captured;
+	
+	/**
 	 * Contention estimate vector for the ith player.
 	 * It stores the user number estimates for each channel. 
 	 */
@@ -107,6 +113,7 @@ public class CognitiveRadio {
 		this.utilityFunction = builder.utilityFunction;
 		this.accessDecisions = builder.accessDecisions;
 		this.captureProbabilities = builder.captureProbabilities;
+		this.captured = builder.captured;
 		this.contentions = builder.contentions;
 		this.utilities = builder.utilities;
 		this.regrets = builder.regrets;
@@ -213,6 +220,14 @@ public class CognitiveRadio {
 		this.utilityFunction = utilityFunction;
 	}
 	
+	public List<List<Boolean>> getCaptured() {
+		return captured;
+	}
+
+	public void setCaptured(List<List<Boolean>> captured) {
+		this.captured = captured;
+	}
+
 	@Override
 	public String toString() {
 		return "[Demand: " + demand + ", strategy: " + strategy + "]";
@@ -235,6 +250,7 @@ public class CognitiveRadio {
 		private IUtilityFunction utilityFunction;
 		private List<Boolean> accessDecisions;
 		private List<List<Double>> captureProbabilities;
+		private List<List<Boolean>> captured;
 		private List<Double> contentions;
 		private List<Double> utilities;
 		private List<Double> regrets;
@@ -276,6 +292,11 @@ public class CognitiveRadio {
 		
 		public CognitiveRadioBuilder setRegrets(List<Double> regrets) {
 			this.regrets = regrets;
+			return this;
+		}
+		
+		public CognitiveRadioBuilder setCaptured(List<List<Boolean>> captured) {
+			this.captured = captured;
 			return this;
 		}
 		
