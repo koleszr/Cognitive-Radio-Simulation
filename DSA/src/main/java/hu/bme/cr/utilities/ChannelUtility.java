@@ -10,7 +10,7 @@ import java.util.List;
  * @author Zoltán Koleszár
  * 
  * <p>A collection of static methods that are related to 
- * the calculate the characteristics of a channel, e.g.
+ * calculate the characteristics of a channel, e.g.
  * estimated number of competing users.</p>
  *
  */
@@ -118,7 +118,7 @@ public class ChannelUtility {
 	 * 
 	 * @param channelCaptures - indicates whether the Cognitive Radio captured the channel in
 	 * 			subslot w, where w = 1, 2, ... W, W is the size of the list.
-	 * @param probabilities - tells the channel capture probability for each subslot
+	 * @param probabilities - the channel capture probability for each subslot
 	 * @return maximum likelihood estimate of competing users
 	 */
 	public static double calculateUserEstimate(final List<Boolean> channelCaptures, final List<Double> probabilities) {

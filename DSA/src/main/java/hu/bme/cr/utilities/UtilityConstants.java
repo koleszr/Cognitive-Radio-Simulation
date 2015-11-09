@@ -28,6 +28,6 @@ public class UtilityConstants {
 	/**
 	 * The number of CSMA subslots.
 	 */
-	public static final double NUMBER_OF_SUBSLOTS = 10;
+	public static final int NUMBER_OF_SUBSLOTS = 10;
 
 }

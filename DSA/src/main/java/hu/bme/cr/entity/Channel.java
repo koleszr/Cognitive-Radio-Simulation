@@ -58,6 +58,9 @@ public class Channel {
 	public void setOccupied(boolean occupied) {
 		this.occupied = occupied;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return "[Transmission rate: " + transmissionRate + ", frequency: " + frequency + ", occupied: " + occupied + "]";
+	}
 }

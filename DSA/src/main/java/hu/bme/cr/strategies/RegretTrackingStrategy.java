@@ -6,6 +6,13 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+/**
+ * 
+ * @author Zoltán Koleszár
+ *
+ * Represents a strategy which implements the regret tracking algorithm.
+ * 
+ */
 public class RegretTrackingStrategy implements IStrategy {
 	
 	private double stepSize;
@@ -141,4 +148,8 @@ public class RegretTrackingStrategy implements IStrategy {
 		return updatedRegrets;
 	}
 
+	@Override
+	public String toString() {
+		return "Regret tracking strategy";
+	}
 }

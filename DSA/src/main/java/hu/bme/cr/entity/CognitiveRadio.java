@@ -32,7 +32,7 @@ public class CognitiveRadio {
 	/**
 	 * The number of channels that the ith player can access in a time slot.
 	 */
-	private int maxChannels;
+	private static int maxChannels;
 	
 	/**
 	 * The strategy played by the ith player, which can be:
@@ -78,6 +78,8 @@ public class CognitiveRadio {
 	 * from the strategy space (those which the Cognitive Radio
 	 * didn't play as well) to implement the regret tracking
 	 * algorithm.
+	 * 
+	 * Size: size of the strategy space
 	 */
 	private List<Double> utilities;
 	
@@ -92,7 +94,7 @@ public class CognitiveRadio {
 	 * maximal number of channels that the user can access,
 	 * i.e. maxChannels.
 	 */
-	private List<List<Boolean>> strategySpace;
+	private static List<List<Boolean>> strategySpace;
 	
 	/**
 	 * Constructor that uses the services of its Builder class.
@@ -101,7 +103,6 @@ public class CognitiveRadio {
 	 */
 	private CognitiveRadio(CognitiveRadioBuilder builder) {
 		this.demand = builder.demand;
-		this.maxChannels = builder.maxChannels;
 		this.strategy = builder.strategy;
 		this.utilityFunction = builder.utilityFunction;
 		this.accessDecisions = builder.accessDecisions;
@@ -109,12 +110,13 @@ public class CognitiveRadio {
 		this.contentions = builder.contentions;
 		this.utilities = builder.utilities;
 		this.regrets = builder.regrets;
-		this.strategySpace = builder.strategySpace;
 	}
 	
 	// TODO
-	public void playInitPhase(int max) {
-		strategy.decideInInitPhase(max);
+	public void playInitPhase() {
+		// set the channel access decision
+		int strategyIndex = strategy.decideInInitPhase(strategySpace.size());
+		accessDecisions = strategySpace.get(strategyIndex);
 	}
 	
 	// TODO
@@ -135,7 +137,7 @@ public class CognitiveRadio {
 		return demand;
 	}
 
-	public int getMaxChannels() {
+	public static int getMaxChannels() {
 		return maxChannels;
 	}
 
@@ -151,8 +153,8 @@ public class CognitiveRadio {
 		this.demand = demand;
 	}
 
-	public void setMaxChannels(int maxChannels) {
-		this.maxChannels = maxChannels;
+	public static void setMaxChannels(int maxChannels) {
+		CognitiveRadio.maxChannels = maxChannels;
 	}
 
 	public void setStrategy(IStrategy strategy) {
@@ -187,12 +189,12 @@ public class CognitiveRadio {
 		this.utilities = utilities;
 	}
 
-	public List<List<Boolean>> getStrategySpace() {
+	public static List<List<Boolean>> getStrategySpace() {
 		return strategySpace;
 	}
 
-	public void setStrategySpace(List<List<Boolean>> strategySpace) {
-		this.strategySpace = strategySpace;
+	public static void setStrategySpace(final List<List<Boolean>> strategySpace) {
+		CognitiveRadio.strategySpace = strategySpace;
 	}
 
 	public List<Double> getRegrets() {
@@ -210,6 +212,13 @@ public class CognitiveRadio {
 	public void setUtilityFunction(IUtilityFunction utilityFunction) {
 		this.utilityFunction = utilityFunction;
 	}
+	
+	@Override
+	public String toString() {
+		return "[Demand: " + demand + ", strategy: " + strategy + "]";
+	}
+
+
 
 
 	/**
@@ -222,7 +231,6 @@ public class CognitiveRadio {
 	public static class CognitiveRadioBuilder {
 
 		private double demand;
-		private int maxChannels;
 		private IStrategy strategy;
 		private IUtilityFunction utilityFunction;
 		private List<Boolean> accessDecisions;
@@ -230,15 +238,9 @@ public class CognitiveRadio {
 		private List<Double> contentions;
 		private List<Double> utilities;
 		private List<Double> regrets;
-		private List<List<Boolean>> strategySpace;
 		
 		public CognitiveRadioBuilder setDemand(double demand) {
 			this.demand = demand;
-			return this;
-		}
-		
-		public CognitiveRadioBuilder setMaxChannels(int maxChannels) {
-			this.maxChannels = maxChannels;
 			return this;
 		}
 		
@@ -269,11 +271,6 @@ public class CognitiveRadio {
 		
 		public CognitiveRadioBuilder setUtilities(List<Double> utilities) {
 			this.utilities = utilities;
-			return this;
-		}
-		
-		public CognitiveRadioBuilder setStrategySpace(List<List<Boolean>> strategySpace) {
-			this.strategySpace = strategySpace;
 			return this;
 		}
 		
