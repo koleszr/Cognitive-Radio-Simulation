@@ -9,6 +9,6 @@ public class App {
         CRSystem system = new CRSystem();
         
         system.init();
-        system.printAll();
+        system.play();
     }
 }

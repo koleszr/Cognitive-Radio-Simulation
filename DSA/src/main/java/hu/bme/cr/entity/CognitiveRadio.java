@@ -1,5 +1,6 @@
 package hu.bme.cr.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import hu.bme.cr.strategies.IStrategy;
@@ -100,7 +101,7 @@ public class CognitiveRadio {
 	 * maximal number of channels that the user can access,
 	 * i.e. maxChannels.
 	 */
-	private static List<List<Boolean>> strategySpace;
+	private static List<List<Boolean>> strategySpace = new ArrayList<>();
 	
 	/**
 	 * Constructor that uses the services of its Builder class.
@@ -119,11 +120,14 @@ public class CognitiveRadio {
 		this.regrets = builder.regrets;
 	}
 	
-	// TODO
+	/**
+	 * Chooses a random strategy from the strategy space.
+	 */
 	public void playInitPhase() {
 		// set the channel access decision
 		int strategyIndex = strategy.decideInInitPhase(strategySpace.size());
 		accessDecisions = strategySpace.get(strategyIndex);
+		System.out.println(accessDecisions);
 	}
 	
 	// TODO
@@ -200,7 +204,7 @@ public class CognitiveRadio {
 		return strategySpace;
 	}
 
-	public static void setStrategySpace(final List<List<Boolean>> strategySpace) {
+	public static void setStrategySpace(List<List<Boolean>> strategySpace) {
 		CognitiveRadio.strategySpace = strategySpace;
 	}
 
