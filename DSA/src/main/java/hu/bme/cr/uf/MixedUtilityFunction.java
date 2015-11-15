@@ -23,6 +23,10 @@ public class MixedUtilityFunction implements IUtilityFunction {
 	
 	private UtilityFunctionParameters params;
 	
+	public MixedUtilityFunction() {
+
+	}
+	
 	public MixedUtilityFunction(UtilityFunctionParameters params) {
 		this.params = params; 
 	}
@@ -40,9 +44,10 @@ public class MixedUtilityFunction implements IUtilityFunction {
 		double rate2 = params.getRate2();
 		double rate3 = params.getRate3();
 		
-		return rate1 * calculateSelfishInterest()
+		return Math.max(rate1 * calculateSelfishInterest()
 				+ rate2 * calculateTransmissionPenalty()
-				+ rate3 * calculateCollisionPenalty();
+				+ rate3 * calculateCollisionPenalty(), 
+				0);
 	}
 	
 	/**
@@ -126,7 +131,7 @@ public class MixedUtilityFunction implements IUtilityFunction {
 		for (int i = 0; i < size; i++) {
 			denominator += transmissionRates.get(i);
 			
-			if (contentions.get(i) > 0.001) {
+			if (contentions.get(i) > 0) {
 				penalty += (transmissionRates.get(i) * collisionProbabilities.get(i)) / contentions.get(i);
 			}
 		}

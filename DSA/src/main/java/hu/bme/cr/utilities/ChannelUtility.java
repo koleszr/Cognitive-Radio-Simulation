@@ -125,8 +125,12 @@ public class ChannelUtility {
 		// |I0|
 		int uCC = calculateUnsuccessfulChannelCaptures(channelCaptures);
 
+		if (uCC == 0) {
+			return 0;
+		}
+
 		// ln(ac0)
-		double lnFP = Math.log(calculateFailureProbability(channelCaptures, probabilities, uCC));
+		double lnFP = Math.log(calculateFailureProbability(channelCaptures, probabilities, uCC));	
 		
 		// successful ln(ac[w])
 		double sCC = calculateSuccessProbability(channelCaptures, probabilities);

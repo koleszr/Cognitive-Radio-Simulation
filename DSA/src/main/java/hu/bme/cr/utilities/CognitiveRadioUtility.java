@@ -33,7 +33,7 @@ public class CognitiveRadioUtility {
 	 * @param contention - the number of competing user estimate on the same channel
 	 * @return channel capture probability
 	 */
-	public double calculateCaptureProbability(double contention) {
+	public static double calculateCaptureProbability(double contention) {
 		return (1 / (1 + contention)) * Math.pow(1 - MODE_SWITCH_TIME / MAX_BACKOFF, 1 + contention);
 	}
 	
@@ -44,7 +44,7 @@ public class CognitiveRadioUtility {
 	 * @param contention - the number of competing user estimate on the same channel
 	 * @return channel collision probability
 	 */
-	public double calculateCollisionProbability(double contention) {
+	public static double calculateCollisionProbability(double contention) {
 		double element1 = MODE_SWITCH_TIME / MAX_BACKOFF;
 		double element2 = 1 / (1 + contention);
 		double element3 = Math.pow(element1, 1 + contention);

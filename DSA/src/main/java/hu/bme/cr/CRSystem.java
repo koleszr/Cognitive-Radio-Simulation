@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import hu.bme.cr.entity.Channel;
 import hu.bme.cr.entity.CognitiveRadio;
@@ -19,11 +21,17 @@ import hu.bme.cr.strategies.MaxUtilityStrategy;
 import hu.bme.cr.strategies.RandomStrategy;
 import hu.bme.cr.strategies.RegretTrackingStrategy;
 import hu.bme.cr.strategies.StrategySpace;
+import hu.bme.cr.uf.MixedUtilityFunction;
+import hu.bme.cr.uf.UtilityFunctionParameters.UtilityFunctionParametersBuilder;
+import hu.bme.cr.utilities.ChannelUtility;
 import hu.bme.cr.utilities.CognitiveRadioUtility;
+import hu.bme.cr.utilities.ListUtility;
 import hu.bme.cr.utilities.UtilityConstants;
 
 public class CRSystem {
 	
+	private static final String INIT_PHASE = "INIT_PHASE";
+
 	private List<CognitiveRadio> radios;
 	
 	private List<Channel> channels;
@@ -31,6 +39,8 @@ public class CRSystem {
 	private Map<String, Integer> collisions;
 	
 	private PrintStream out;
+	
+	private Scanner scanner = new Scanner(System.in);
 	
 	public CRSystem() {
 		collisions = new HashMap<>(102);
@@ -65,34 +75,32 @@ public class CRSystem {
 	 * Initialize the cognitive radio system.
 	 */
 	public void init() {
-		try (Scanner scanner = new Scanner(System.in)) {
-			System.out.print("Where should I log? (1 - console, 2 - in text file): ");
-			initLog(scanner.nextInt());
-			
-			System.out.println();
-			
-			// read the number of channels and set params
-			System.out.print("\nNumber of channels: ");
-			int channelNumber = scanner.nextInt();
-			
-			initChannels(scanner, channelNumber);
-			
-			// read the number of channels that the users can access
-			System.out.print("\nMaximum number of channels that users can use: ");
-			int maxChannels = scanner.nextInt();
-			System.out.println();
-			
-			CognitiveRadio.setMaxChannels(maxChannels);
-			
-			// calculate the strategy space
-			setStrategySpace(maxChannels, channelNumber);
-			
-			// read the number of cognitive radio devices and set params
-			System.out.print("Number of cognitive radio devices: ");
-			int radioNumber = scanner.nextInt();
-			
-			initRadios(scanner, radioNumber, channelNumber);			
-		}
+		System.out.print("Where should I log? (1 - console, 2 - in text file): ");
+		initLog(scanner.nextInt());
+		
+		System.out.println();
+		
+		// read the number of channels and set params
+		System.out.print("Number of channels: ");
+		int channelNumber = scanner.nextInt();
+		
+		initChannels(channelNumber);
+		
+		// read the number of channels that the users can access
+		System.out.print("\nMaximum number of channels that users can use: ");
+		int maxChannels = scanner.nextInt();
+		System.out.println();
+		
+		CognitiveRadio.setMaxChannels(maxChannels);
+		
+		// calculate the strategy space
+		setStrategySpace(maxChannels, channelNumber);
+		
+		// read the number of cognitive radio devices and set params
+		System.out.print("Number of cognitive radio devices: ");
+		int radioNumber = scanner.nextInt();
+		
+		initRadios(radioNumber, channelNumber);			
 	}
 	
 	public void play() {
@@ -112,16 +120,46 @@ public class CRSystem {
 	}
 	
 	/**
-	 * TODO
+	 * Initial game phase. Steps:
+	 * <ol>
+	 * <li>Every radio choose a channel access (strategy)</li>
+	 * <li>Channel access in each subslot by generating a random backoff time.</li>
+	 * <li>Calculate channel access probability by backoff time and add it to
+	 * CognitiveRadios captureProbabilities list.</li>
+	 * <li>Check if there was a collision on the channel at the given subslot 
+	 * according to the backoff times.</li>
+	 * <li>Calculate user estimate for each CognitiveRadio.</li>
+	 * <li>Calculate channel capture probability for each CognitiveRadio using user estimate.</li>
+	 * <li>Calculate channel collision probability for each CognitiveRadio using user estimate.</li>
+	 * <li>Calculate utility for each CognitiveRadio.</li>
+	 * </ol>
 	 */
 	private void playInitPhase() {
-		// every CognitiveRadio object chooses a random strategy
+		out.println("****************");
+		out.println("** INIT PHASE **");
+		out.println("****************");
+
+		collisions.put(INIT_PHASE, 0);
+		
+		// 1. Every radio choose a channel access (primary strategy)
 		radios.stream().forEach(CognitiveRadio::playInitPhase);	
 		
-		collisions.put("INIT_PHASE", 0);
+		// Generate a list which contains the secondary strategies for every CognitiveRadio
+		List<List<Integer>> secondaryStrategyOrder = new ArrayList<>(radios.size());
 		
+		for (CognitiveRadio r : radios) {
+			List<Integer> strategyIndexOrder = IntStream.range(0, CognitiveRadio.getStrategySpace().size()).boxed().collect(Collectors.toList());
+			strategyIndexOrder.remove(CognitiveRadio.getStrategySpace().indexOf(r.getAccessDecisions()));
+			Collections.shuffle(strategyIndexOrder);
+			secondaryStrategyOrder.add(strategyIndexOrder);
+		}
+		
+		// 2. Channel access in each subslot by generating a random backoff time.
+		// 3. Calculate channel access probability by backoff time and add it to CognitiveRadios captureProbabilities list.
+		// 4. Check if there was a collision on the channel at the given subslot according to the backoff times.
 		for (int i = 0; i < channels.size(); i++) {
-			out.println("\nChannel " + (i + 1) + ":");
+			out.println();
+			out.println("Channel " + (i + 1) + ":");
 			
 			for (int j = 0; j < UtilityConstants.NUMBER_OF_SUBSLOTS; j++) {
 				List<Double> backoffTimes = new ArrayList<>(radios.size());
@@ -130,11 +168,15 @@ public class CRSystem {
 					
 					// if r can access given channel than we generate a backoff time 
 					if (r.getAccessDecisions().get(i)) {
-						backoffTimes.add(CognitiveRadioUtility.generateBackOff(UtilityConstants.MAX_BACKOFF));
+						double backOff = CognitiveRadioUtility.generateBackOff(UtilityConstants.MAX_BACKOFF);
+						backoffTimes.add(backOff);
+						
+						r.getCaptureProbabilities().get(i).add(ChannelUtility.calculateChannelCaptureProbability(backOff));
 					}
 					// if not than we add NaN to the list
 					else {
 						backoffTimes.add(Double.NaN);
+						r.getCaptureProbabilities().get(i).add(0.0);
 					}
 				}
 				
@@ -142,10 +184,57 @@ public class CRSystem {
 				int minIndex = findMinIndex(backoffTimes);
 				
 				if (minIndex == -1) {
-					collisions.replace("INIT_PHASE", Math.incrementExact(collisions.get("INIT_PHASE")));
+					collisions.replace(INIT_PHASE, Math.incrementExact(collisions.get(INIT_PHASE)));
+				}
+				
+				for (int k = 0; k < radios.size(); k++) {
+					radios.get(k).getCaptured().get(i).add(k == minIndex);
 				}
 			}
 		}
+		
+		
+		// 5. Calculate user estimate (contentions) for each CognitiveRadio.
+		// 6. Calculate channel capture probability for each CognitiveRadio using user estimate.
+		// 7. Calculate channel collision probability for each CognitiveRadio using user estimate.
+		// 8. Calculate utility for each CognitiveRadio.
+		for (CognitiveRadio r : radios) {
+			List<Double> contentions = r.getContentions().get(CognitiveRadio.getStrategySpace().indexOf(r.getAccessDecisions()));
+			List<Double> captures = new ArrayList<>(channels.size());
+			List<Double> collisions = new ArrayList<>(channels.size());
+			
+			for (int i = 0; i < r.getCaptured().size(); i++) {
+				double contention = ChannelUtility.calculateUserEstimate(r.getCaptured().get(i), r.getCaptureProbabilities().get(i));
+				contentions.add(contention);
+				captures.add(CognitiveRadioUtility.calculateCaptureProbability(contention));
+				Collections.replaceAll(captures, Double.NaN, 0.0);
+				collisions.add(CognitiveRadioUtility.calculateCollisionProbability(contention));
+				Collections.replaceAll(collisions, Double.NaN, 0.0);
+			}
+			
+			Collections.replaceAll(contentions, Double.NaN, 0.0);
+			
+			UtilityFunctionParametersBuilder builder = new UtilityFunctionParametersBuilder();
+			builder.setTransMissionRates(channels.stream().map(Channel::getTransmissionRate).collect(Collectors.toList()));
+			builder.setAccessDecisions(r.getAccessDecisions());
+			builder.setContentionLevel(contentions);
+			builder.setCaptureProbabilities(captures);
+			builder.setCollisionProbabilities(collisions);
+			builder.setDemand(r.getDemand());
+			
+			// TODO calculate utility on different rate1, rate2 and rate3 values
+			builder.setRate1(1);
+			builder.setRate2(1);
+			builder.setRate3(1);
+			builder.setKappa(0);
+			
+			MixedUtilityFunction uf = new MixedUtilityFunction(builder.build());
+			r.getUtilities().add(CognitiveRadio.getStrategySpace().indexOf(r.getAccessDecisions()), uf.calculateUtility());
+		}
+		
+		// log
+		printCognitiveRadioData();
+		out.println("Number of collisions in init phase: " + collisions.get(INIT_PHASE));
 	}
 	
 	// TODO
@@ -156,6 +245,35 @@ public class CRSystem {
 	// TODO
 	private void playDecidePhase() {
 		
+	}
+	
+	/**
+	 * Prints CognitiveRadio data to output.
+	 */
+	private void printCognitiveRadioData() {
+		for (CognitiveRadio r : radios) {
+			out.println();
+			out.println("Radio " + radios.indexOf(r) + ": ");
+			
+			out.println("Channel access decision: ");
+			out.println(r.getAccessDecisions());
+			out.println();
+			
+			out.println("Channel captures (Subslot, Channel)");
+			r.getCaptured().stream().forEach(out::println);
+			out.println();
+			
+			out.println("Channel capture probabilities (Subslot, Channel)");
+			r.getCaptureProbabilities().stream().forEach(cps -> out.println(ListUtility.formatDoubleList(cps, cp -> String.format("%.3f", cp))));
+			out.println();
+			
+			int strategyIndex = CognitiveRadio.getStrategySpace().indexOf(r.getAccessDecisions());
+			out.println("User estimate on strategy " + strategyIndex);
+			out.println(ListUtility.formatDoubleList(r.getContentions().get(strategyIndex), c -> String.format("%.3f", c)));
+			out.println();
+			
+			out.println("Utility on strategy " + strategyIndex + ": " + r.getUtilities().get(strategyIndex));
+		}
 	}
 	
 	/**
@@ -176,32 +294,25 @@ public class CRSystem {
 		Collections.sort(sortedBackOffs);
 		
 		if (sortedBackOffs.get(0).equals(Double.NaN)) {
-			out.println("NO COLLISION - NaN");
+			out.println("NO COLLISION - No radios attempt to access the channel!");
 			return -2;
 		}
 		else if (sortedBackOffs.get(1).equals(Double.NaN)) {
-			out.println("NO COLLISION - NaN");
-			return 0;
+			out.println("NO COLLISION - Only one radio attempts to access the channel!");
+			return backoffTimes.indexOf(sortedBackOffs.get(0));
 		}
 		
 		int minIndex = backoffTimes.indexOf(sortedBackOffs.get(0));
 		int min2Index = backoffTimes.indexOf(sortedBackOffs.get(1));
 		
 		if (backoffTimes.get(minIndex) + UtilityConstants.MODE_SWITCH_TIME < backoffTimes.get(min2Index)) {
-			out.println("NO COLLISION - " + backoffTimes);
+			out.println("NO COLLISION - " + ListUtility.formatDoubleList(backoffTimes, b -> String.format("%.3f", b)));
 			return minIndex;
 		}
 		
-		out.println("COLLISION - 1st backoff: " + backoffTimes.get(minIndex) + ", 2nd backoff: " + backoffTimes.get(min2Index));
+		out.println("COLLISION - 1st backoff: " + String.format("%.3f", backoffTimes.get(minIndex)) + 
+				", 2nd backoff: " + String.format("%.3f", backoffTimes.get(min2Index)));
 		return -1;
-	}
-	
-	public void printAll() {
-		CognitiveRadio.getStrategySpace().stream().forEach(out::println);
-		
-		getRadios().stream().forEach(out::println);
-		
-		getChannels().stream().forEach(out::println);
 	}
 	
 	/**
@@ -210,7 +321,7 @@ public class CRSystem {
 	 * @param n - number of CognitiveRadio entities to initialize
 	 * @param channelNumber - number of Channels in the system
 	 */
-	private void initRadios(Scanner scanner, int n, int channelNumber) {
+	private void initRadios(int n, int channelNumber) {
 		radios = new ArrayList<>(n);
 		
 		for (int i = 0; i < n; i++) {
@@ -221,27 +332,41 @@ public class CRSystem {
 			crb.setDemand(scanner.nextDouble());
 			
 			// get and set strategy
-			System.out.print("Strategy of user " + (i + 1) + " (1 - regret tracking, 2 - max utility): ");
-			int strategyNumber = scanner.nextInt();
+			System.out.print("Strategy of user " + (i + 1) + " (1 - regret tracking, 2 - max utility, 3 - random): ");
+			setStrategy(crb, scanner.nextInt());
 			
+			System.out.println();
 			
-			switch (strategyNumber) {
-			// regret tracking algorithm
-			case 1:
-				System.out.print("Stepsize (1 - fix, 2 - decreasing): ");
-				crb.setStrategy(new RegretTrackingStrategy(scanner.nextInt()));
-				break;
-			// max utility strategy
-			case 2:
-				crb.setStrategy(new MaxUtilityStrategy());
-				break;
-			// random strategy
-			case 3:
-				crb.setStrategy(new RandomStrategy());
-				break;
-			default:
-				throw new IllegalArgumentException("Wrong strategy!");		
+			// captureProbabilities
+			List<List<Double>> captureProbabilities = new ArrayList<>(channelNumber);
+			for (int j = 0; j < channelNumber; j++) {
+				captureProbabilities.add(new ArrayList<>(UtilityConstants.NUMBER_OF_SUBSLOTS));
 			}
+			crb.setCaptureProbabilities(captureProbabilities);
+			
+			// captured
+			List<List<Boolean>> captured = new ArrayList<>(channelNumber);
+			for (int j = 0; j < channelNumber; j++) {
+				captured.add(new ArrayList<>(UtilityConstants.NUMBER_OF_SUBSLOTS));
+			}
+			crb.setCaptured(captured);
+			
+			// contentions
+			List<List<Double>> contentions = new ArrayList<>(CognitiveRadio.getStrategySpace().size());
+			for (int j = 0; j < CognitiveRadio.getStrategySpace().size(); j++) {
+				contentions.add(new ArrayList<>(channelNumber));
+			}
+			crb.setContentions(contentions);
+			
+			// utilities
+			List<Double> utilities = new ArrayList<>(CognitiveRadio.getStrategySpace().size());
+			for (int j = 0; j < CognitiveRadio.getStrategySpace().size(); j++) {
+				utilities.add(0.0);
+			}
+			crb.setUtilities(utilities);
+			
+			// regrets
+			crb.setRegrets(new ArrayList<>(CognitiveRadio.getStrategySpace().size()));
 			
 			radios.add(crb.build());
 		}	
@@ -252,7 +377,7 @@ public class CRSystem {
 	 * 
 	 * @param n - number of channels to initialize
 	 */
-	private void initChannels(Scanner scanner, int n) {
+	private void initChannels(int n) {
 		channels = new ArrayList<>(n);
 		
 		for (int i = 0; i < n; i++) {
@@ -263,6 +388,8 @@ public class CRSystem {
 			// get frequency 
 			System.out.print("Frequency of channel " + (i + 1) + ": ");
 			double frequency = scanner.nextDouble();
+			
+			System.out.println();
 
 			// set Channel parameters and add it to channels list 
 			channels.add(new Channel(transmissionRate, frequency, false));
@@ -303,6 +430,31 @@ public class CRSystem {
 			strategies.addAll(new ArrayList<>(Collections.nCopies(channelNumber - i, false)));
 			CognitiveRadio.getStrategySpace().addAll(StrategySpace.getStrategySpace(strategies));
 		}	
+	}
+	
+	/**
+	 * Set strategy for given CognitiveRadioBuilder.
+	 * @param crb
+	 * @param strategyNumber
+	 */
+	private void setStrategy(CognitiveRadioBuilder crb, int strategyNumber) {
+		switch (strategyNumber) {
+		// regret tracking algorithm
+		case 1:
+			System.out.print("Stepsize (1 - fix, 2 - decreasing): ");
+			crb.setStrategy(new RegretTrackingStrategy(scanner.nextInt()));
+			break;
+		// max utility strategy
+		case 2:
+			crb.setStrategy(new MaxUtilityStrategy());
+			break;
+		// random strategy
+		case 3:
+			crb.setStrategy(new RandomStrategy());
+			break;
+		default:
+			throw new IllegalArgumentException("Wrong strategy!");		
+		}
 	}
 }
 

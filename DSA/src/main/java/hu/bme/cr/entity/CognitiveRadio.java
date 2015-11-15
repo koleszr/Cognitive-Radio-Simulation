@@ -78,7 +78,7 @@ public class CognitiveRadio {
 	 * Contention estimate vector for the ith player.
 	 * It stores the user number estimates for each channel. 
 	 */
-	private List<Double> contentions;
+	private List<List<Double>> contentions;
 	
 	/**
 	 * We have to know the utilities of every strategies
@@ -127,7 +127,6 @@ public class CognitiveRadio {
 		// set the channel access decision
 		int strategyIndex = strategy.decideInInitPhase(strategySpace.size());
 		accessDecisions = strategySpace.get(strategyIndex);
-		System.out.println(accessDecisions);
 	}
 	
 	// TODO
@@ -184,11 +183,11 @@ public class CognitiveRadio {
 		this.captureProbabilities = captureProbabilities;
 	}
 
-	public List<Double> getContentions() {
+	public List<List<Double>> getContentions() {
 		return contentions;
 	}
 
-	public void setContentions(List<Double> contentions) {
+	public void setContentions(List<List<Double>> contentions) {
 		this.contentions = contentions;
 	}
 
@@ -255,7 +254,7 @@ public class CognitiveRadio {
 		private List<Boolean> accessDecisions;
 		private List<List<Double>> captureProbabilities;
 		private List<List<Boolean>> captured;
-		private List<Double> contentions;
+		private List<List<Double>> contentions;
 		private List<Double> utilities;
 		private List<Double> regrets;
 		
@@ -284,7 +283,7 @@ public class CognitiveRadio {
 			return this;
 		}
 
-		public CognitiveRadioBuilder setContentions(List<Double> contentions) {
+		public CognitiveRadioBuilder setContentions(List<List<Double>> contentions) {
 			this.contentions = contentions;
 			return this;
 		}
