@@ -1,7 +1,8 @@
 package hu.bme.cr.strategies;
 
 import java.util.Collections;
-import java.util.Random;
+
+import hu.bme.cr.utilities.ListUtility;
 
 /**
  * 
@@ -14,20 +15,6 @@ import java.util.Random;
 public class MaxUtilityStrategy implements IStrategy {
 
 	/**
-	 * In the init phase the strategy generates
-	 * a random number which will be the index
-	 * of the strategy from strategy space played
-	 * in the next decision period.
-	 * 
-	 * @param max top boundary - exclusive
-	 * @return strategy space index to play
-	 */
-	@Override
-	public int decideInInitPhase(int max) {
-		return new Random().nextInt(max);
-	}
-
-	/**
 	 * Gets the index of the stratergy with the maximal
 	 * utility in this decision period. In the next decision
 	 * period that strategy will be played.
@@ -37,8 +24,7 @@ public class MaxUtilityStrategy implements IStrategy {
 	 */
 	@Override
 	public StrategyParameters decideInSetPhase(StrategyParameters params) {
-		int strategyIndex = params.getUtilities().indexOf(Collections.max(params.getUtilities()));
-		return new StrategyParameters(Collections.emptyList(), Collections.emptyList(), strategyIndex, 0);
+		return new StrategyParameters(Collections.emptyList(), ListUtility.getIndexesDescending(params.getUtilities()));
 	}
 
 	@Override

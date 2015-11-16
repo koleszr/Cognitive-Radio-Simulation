@@ -3,8 +3,9 @@ package hu.bme.cr.strategies;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 import java.util.stream.Collectors;
+
+import hu.bme.cr.utilities.ListUtility;
 
 /**
  * 
@@ -22,18 +23,6 @@ public class RegretTrackingStrategy implements IStrategy {
 	}
 
 	/**
-	 * Generates a uniformly distributed random number
-	 * between 0 (inclusive) and max (exclusive).
-	 * 
-	 * @param max top boundary
-	 * @return index of the strategy to play in the next decision period
-	 */
-	@Override
-	public int decideInInitPhase(int max) {
-		return new Random().nextInt(max);
-	}
-
-	/**
 	 * Creates an instantaneous regret list and then returns
 	 * the index of the highest valued element and the mean
 	 * regret list which equals to the instantaneous regret 
@@ -46,7 +35,7 @@ public class RegretTrackingStrategy implements IStrategy {
 		// 1. caclculate the instantaneous regret list
 		List<Double> instRegret = calcInstantaneousRegrets(params);	
 		
-		return new StrategyParameters(Collections.emptyList(), instRegret, instRegret.indexOf(Collections.max(instRegret)), 0);
+		return new StrategyParameters(instRegret, ListUtility.getIndexesDescending(instRegret));
 	}
 
 	/**
@@ -72,7 +61,7 @@ public class RegretTrackingStrategy implements IStrategy {
 			}
 		}
 		
-		return new StrategyParameters(Collections.emptyList(), updateRegret(params), probabilities.indexOf(Collections.max(probabilities)), 0);
+		return new StrategyParameters(updateRegret(params), ListUtility.getIndexesDescending(probabilities));
 	}
 	
 	/**

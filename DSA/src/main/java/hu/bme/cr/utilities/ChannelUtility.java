@@ -33,7 +33,7 @@ public class ChannelUtility {
 			throw new IllegalArgumentException("Back off time is less than 0!");
 		}
 		
-		return 1 - ((backOff + MODE_SWITCH_TIME) / MAX_BACKOFF);
+		return Math.max(0.0, 1 - ((backOff + MODE_SWITCH_TIME) / MAX_BACKOFF));
 	}
 	
 	/**

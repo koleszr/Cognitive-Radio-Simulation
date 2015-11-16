@@ -1,7 +1,6 @@
 package hu.bme.cr.strategies;
 
 import java.util.Collections;
-import java.util.Random;
 
 /**
  * 
@@ -13,18 +12,13 @@ import java.util.Random;
 public class RandomStrategy implements IStrategy {
 
 	@Override
-	public int decideInInitPhase(int max) {
-		return new Random().nextInt(max);
-	}
-
-	@Override
 	public StrategyParameters decideInSetPhase(StrategyParameters params) {
-		return new StrategyParameters(Collections.emptyList(), Collections.emptyList(), decideInInitPhase(params.getSize()), 0);
+		return new StrategyParameters(Collections.emptyList(), decideInInitPhase(params.getSize()));
 	}
 
 	@Override
 	public StrategyParameters decide(StrategyParameters params) {
-		return new StrategyParameters(Collections.emptyList(), Collections.emptyList(), decideInInitPhase(params.getSize()), 0);
+		return new StrategyParameters(Collections.emptyList(), decideInInitPhase(params.getSize()));
 	}
 
 	@Override

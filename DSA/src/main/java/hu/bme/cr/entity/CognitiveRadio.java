@@ -59,7 +59,7 @@ public class CognitiveRadio {
 	 * 	strategy decided not to access it</li>
 	 * </ul>
 	 */
-	private List<Boolean> accessDecisions;
+	private List<Integer> accessDecisions;
 	
 	/**
 	 * List of probabilites that the CognitiveRadio
@@ -125,8 +125,7 @@ public class CognitiveRadio {
 	 */
 	public void playInitPhase() {
 		// set the channel access decision
-		int strategyIndex = strategy.decideInInitPhase(strategySpace.size());
-		accessDecisions = strategySpace.get(strategyIndex);
+		accessDecisions = strategy.decideInInitPhase(strategySpace.size());
 	}
 	
 	// TODO
@@ -155,7 +154,7 @@ public class CognitiveRadio {
 		return strategy;
 	}
 
-	public List<Boolean> getAccessDecisions() {
+	public List<Integer> getAccessDecisions() {
 		return accessDecisions;
 	}
 	
@@ -171,7 +170,7 @@ public class CognitiveRadio {
 		this.strategy = strategy;
 	}
 
-	public void setAccessDecisions(List<Boolean> accessDecisions) {
+	public void setAccessDecisions(List<Integer> accessDecisions) {
 		this.accessDecisions = accessDecisions;
 	}
 
@@ -251,7 +250,7 @@ public class CognitiveRadio {
 		private double demand;
 		private IStrategy strategy;
 		private IUtilityFunction utilityFunction;
-		private List<Boolean> accessDecisions;
+		private List<Integer> accessDecisions;
 		private List<List<Double>> captureProbabilities;
 		private List<List<Boolean>> captured;
 		private List<List<Double>> contentions;
@@ -273,7 +272,7 @@ public class CognitiveRadio {
 			return this;
 		}
 		
-		public CognitiveRadioBuilder setAccessDecisions(List<Boolean> accessDecisions) {
+		public CognitiveRadioBuilder setAccessDecisions(List<Integer> accessDecisions) {
 			this.accessDecisions = accessDecisions;
 			return this;
 		}
