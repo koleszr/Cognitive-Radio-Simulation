@@ -13,6 +13,9 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
+import org.bson.Document;
+
+import hu.bme.cr.dsl.DataStore;
 import hu.bme.cr.entity.Channel;
 import hu.bme.cr.entity.CognitiveRadio;
 import hu.bme.cr.entity.CognitiveRadio.CognitiveRadioBuilder;
@@ -20,6 +23,7 @@ import hu.bme.cr.strategies.MaxUtilityStrategy;
 import hu.bme.cr.strategies.RandomStrategy;
 import hu.bme.cr.strategies.RegretTrackingStrategy;
 import hu.bme.cr.strategies.StrategySpace;
+import hu.bme.cr.uf.CompetitiveUtilityFunction;
 import hu.bme.cr.uf.MixedUtilityFunction;
 import hu.bme.cr.uf.UtilityFunctionParameters.UtilityFunctionParametersBuilder;
 import hu.bme.cr.utilities.ChannelUtility;
@@ -30,6 +34,14 @@ import hu.bme.cr.utilities.UtilityConstants;
 public class CRSystem {
 	
 	private static final String INIT_PHASE = "INIT_PHASE";
+	private static final String SET_PHASE = "SET_PHASE";
+	private static final String NORMAL_PHASE = "NORMAL_PHASE";
+	
+	private DataStore ds;
+	
+	private Document doc;
+	
+	private List<Document> phases;
 
 	private List<CognitiveRadio> radios;
 	
@@ -44,12 +56,10 @@ public class CRSystem {
 	private int strategySpaceSize;
 	
 	public CRSystem() {
-		collisions = new HashMap<>(102);
-	}
-	
-	public CRSystem(List<CognitiveRadio> radios, List<Channel> channels) {
-		this.radios = radios;
-		this.channels = channels;
+		collisions = new HashMap<>(27);
+		ds = new DataStore();
+		doc = new Document();
+		phases = new ArrayList<>();
 	}
 
 	/*
@@ -76,11 +86,15 @@ public class CRSystem {
 	 * Initialize the cognitive radio system.
 	 */
 	public void init() {
+		try {
+			Thread.sleep(100);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
 		System.out.print("Where should I log? (1 - console, 2 - in text file): ");
-		initLog(scanner.nextInt());
-		
-		System.out.println();
-		
+		String fileName = initLog(scanner.nextInt());
+	
 		// read the number of channels and set params
 		System.out.print("Number of channels: ");
 		int channelNumber = scanner.nextInt();
@@ -88,7 +102,7 @@ public class CRSystem {
 		initChannels(channelNumber);
 		
 		// read the number of channels that the users can access
-		System.out.print("\nMaximum number of channels that users can use: ");
+		System.out.print("Maximum number of channels that users can use: ");
 		int maxChannels = scanner.nextInt();
 		System.out.println();
 		
@@ -102,29 +116,108 @@ public class CRSystem {
 		System.out.print("Number of cognitive radio devices: ");
 		int radioNumber = scanner.nextInt();
 		
-		initRadios(radioNumber, channelNumber);			
+		initRadios(radioNumber, channelNumber);	
+		
+		doc.append("name", fileName)
+			.append("subslots", UtilityConstants.NUMBER_OF_SUBSLOTS)
+			.append("radios", radios.size())
+			.append("channels", channels.size())
+			.append("strategySpaceSize", strategySpaceSize);
 	}
 	
-	public void play() {
-		// play init phase
-		playInitPhase();
-		
-		// play set phase
-		playSetPhase();
-		
-		// play decide phase (100 rounds)
-		for (int i = 0; i < 100; i++) {
-			playDecidePhase();
-		}
-		
-		out.println("Number of collisions: " + collisions);
-		out.close();
-	}
+	
 	
 	/**
 	 * Initial game phase. Steps:
 	 * <ol>
-	 * <li>Every radio choose a channel access (strategy)</li>
+	 * <li>Every radio choose a channel access (primary strategy) and a secondary strategy order.</li>
+	 * <li>Channel access (steps described in play method).</li>
+	 * <ol>
+	 */
+	public void playInitPhase() {
+		out.println("****************");
+		out.println("** INIT PHASE **");
+		out.println("****************");
+		
+		// 1. Every radio choose a channel access (primary strategy) and a secondary strategy order
+		radios.stream().forEach(CognitiveRadio::playInitPhase);	
+
+		play(INIT_PHASE);
+	}
+	
+	/**
+	 * Set game phase. Steps:
+	 * <ol>
+	 * <li>Play set phase of the CognitiveRadios strategy.</li>
+	 * <li>Channel access (steps described in play method).</li>
+	 * <ol>
+	 */
+	public void playSetPhase() {
+		radios.stream().forEach(CognitiveRadio::playSetPhase);
+		radios.stream().forEach(radio -> out.println("Regrets: " + ListUtility.formatDoubleList(radio.getRegrets(), reg -> String.format("%.3f", reg))));
+		persist(INIT_PHASE);
+		radios.stream().forEach(radio -> radio.getContentions().stream().forEach(List::clear));
+		
+		out.println();
+		out.println();
+		out.println("****************");
+		out.println("** SET PHASE  **");
+		out.println("****************");
+		
+		play(SET_PHASE);
+	}
+	
+	/**
+	 * Normal game phase. Steps:
+	 * <ol>
+	 * <li>Play normal/decide phase of the CognitiveRadios strategy.</li>
+	 * <li>Channel access (steps described in play method).</li>
+	 * <ol>
+	 * 
+	 * @param number of the round
+	 */
+	public void playDecidePhase(int r) {
+		radios.stream().forEach(CognitiveRadio::playDecidePhase);
+		radios.stream().forEach(radio -> out.println("Regrets: " + ListUtility.formatDoubleList(radio.getRegrets(), reg -> String.format("%.3f", reg))));
+		
+		if (r == 0) {
+			persist(SET_PHASE);
+		}
+		else {
+			persist(NORMAL_PHASE + "_" + r);
+		}
+		
+		radios.stream().forEach(radio -> radio.getContentions().stream().forEach(List::clear));
+		
+		out.println();
+		out.println();
+		out.println("***************************");
+		out.println("** NORMAL PHASE, ROUND " + r + "**");
+		out.println("***************************");
+		
+		play(NORMAL_PHASE + "_" + r);
+	}
+	
+	/**
+	 * Ends the game by persisting important 
+	 * data to MongoDB database ("thesis" database, 
+	 * "simulations" collection) and by closing output.
+	 */
+	public void endGame() {
+		persist(NORMAL_PHASE + "_" + (UtilityConstants.ROUNDS - 1));
+		doc.append("phases", phases);
+		ds.getDocuments().insertOne(doc);
+		
+		out.println();
+		out.println("***********************");
+		out.println("** End of Simulation **");
+		out.println("***********************");
+		out.close();		
+	}
+	
+	/**
+	 * Steps: 
+	 * <ol>
 	 * <li>Channel access in each subslot by generating a random backoff time.</li>
 	 * <li>Calculate channel access probability by backoff time and add it to
 	 * CognitiveRadios captureProbabilities list.</li>
@@ -135,26 +228,20 @@ public class CRSystem {
 	 * <li>Calculate channel collision probability for each CognitiveRadio using user estimate.</li>
 	 * <li>Calculate utility for each CognitiveRadio.</li>
 	 * </ol>
+	 * 
+	 * @param key - key to store the number of collisions
 	 */
-	private void playInitPhase() {
-		out.println("****************");
-		out.println("** INIT PHASE **");
-		out.println("****************");
-
-		collisions.put(INIT_PHASE, 0);
-		
-		// 1. Every radio choose a channel access (primary strategy)
-		radios.stream().forEach(CognitiveRadio::playInitPhase);	
-		
+	private void play(String key) {
 		// play every strategy
-		// 2. Channel access in each subslot by generating a random backoff time.
-		// 3. Calculate channel access probability by backoff time and add it to CognitiveRadios captureProbabilities list.
-		// 4. Check if there was a collision on the channel at the given subslot according to the backoff times.
+		// 1. Channel access in each subslot by generating a random backoff time.
+		// 2. Calculate channel access probability by backoff time and add it to CognitiveRadios captureProbabilities list.
+		// 3. Check if there was a collision on the channel at the given subslot according to the backoff times.
 		for (int s = 0; s < strategySpaceSize; s++) {
+			collisions.put(key + "_" + s, 0);
 			
 			for (int i = 0; i < channels.size(); i++) {
-				out.println();
-				out.println("Channel " + (i + 1) + ":");
+				System.out.println();
+				System.out.println("Channel " + (i + 1) + ":");
 				
 				for (int j = 0; j < UtilityConstants.NUMBER_OF_SUBSLOTS; j++) {
 					List<Double> backoffTimes = new ArrayList<>(radios.size());
@@ -179,7 +266,7 @@ public class CRSystem {
 					int minIndex = findMinIndex(backoffTimes);
 					
 					if (minIndex == -1) {
-						collisions.replace(INIT_PHASE, Math.incrementExact(collisions.get(INIT_PHASE)));
+						collisions.replace(key + "_" + s, Math.incrementExact(collisions.get(key + "_" + s)));
 					}
 					
 					for (int k = 0; k < radios.size(); k++) {
@@ -188,22 +275,22 @@ public class CRSystem {
 				}
 			}
 		
-			// 5. Calculate user estimate (contentions) for each CognitiveRadio.
-			// 6. Calculate channel capture probability for each CognitiveRadio using user estimate.
-			// 7. Calculate channel collision probability for each CognitiveRadio using user estimate.
-			// 8. Calculate utility for each CognitiveRadio.
+			// 4. Calculate user estimate (contentions) for each CognitiveRadio.
+			// 5. Calculate channel capture probability for each CognitiveRadio using user estimate.
+			// 6. Calculate channel collision probability for each CognitiveRadio using user estimate.
+			// 7. Calculate utility for each CognitiveRadio.
 			for (CognitiveRadio r : radios) {
 				List<Double> contentions = r.getContentions().get(r.getAccessDecisions().get(s));
 				List<Double> captures = new ArrayList<>(channels.size());
-				List<Double> collisions = new ArrayList<>(channels.size());
+				List<Double> collisionsProbabilities = new ArrayList<>(channels.size());
 				
 				for (int i = 0; i < r.getCaptured().size(); i++) {
 					double contention = ChannelUtility.calculateUserEstimate(r.getCaptured().get(i), r.getCaptureProbabilities().get(i));
 					contentions.add(contention);
 					captures.add(CognitiveRadioUtility.calculateCaptureProbability(contention));
 					Collections.replaceAll(captures, Double.NaN, 0.0);
-					collisions.add(CognitiveRadioUtility.calculateCollisionProbability(contention));
-					Collections.replaceAll(collisions, Double.NaN, 0.0);
+					collisionsProbabilities.add(CognitiveRadioUtility.calculateCollisionProbability(contention));
+					Collections.replaceAll(collisionsProbabilities, Double.NaN, 0.0);
 				}
 				
 				Collections.replaceAll(contentions, Double.NaN, 0.0);
@@ -213,39 +300,51 @@ public class CRSystem {
 				builder.setAccessDecisions(CognitiveRadio.getStrategySpace().get(r.getAccessDecisions().get(s)));
 				builder.setContentionLevel(contentions);
 				builder.setCaptureProbabilities(captures);
-				builder.setCollisionProbabilities(collisions);
+				builder.setCollisionProbabilities(collisionsProbabilities);
 				builder.setDemand(r.getDemand());
 				
-				// TODO calculate utility on different rate1, rate2 and rate3 values
-				builder.setRate1(1);
-				builder.setRate2(1);
-				builder.setRate3(1);
-				builder.setKappa(0);
-				
-				MixedUtilityFunction uf = new MixedUtilityFunction(builder.build());
-				r.getUtilities().set(r.getAccessDecisions().get(s), uf.calculateUtility());
+				// calculate utility							
+				r.getUtilities().set(r.getAccessDecisions().get(s), r.calculateUtility(builder.build()));
 			}
+			
 			
 			// log
 			printCognitiveRadioData(s);
-			out.println("Number of collisions in init phase: " + collisions.get(INIT_PHASE));
-			
+			out.println("Number of collisions in " + key + "_" + s + " phase: " + collisions.get(key + "_" + s));
+
 			radios.stream().forEach(CRSystem::clearRadio);
 		}
 		
 		for (CognitiveRadio r : radios) {
-			out.println(r.getUtilities());
+			out.println("Utilities: " + ListUtility.formatDoubleList(r.getUtilities(), u -> String.format("%.3f", u)));
 		}
 	}
 	
-	// TODO
-	private void playSetPhase() {
+	private void persist(String phase) {
+		Document phaseDoc = new Document();
 		
-	}
-	
-	// TODO
-	private void playDecidePhase() {
+		List<Document> radioDocs = new ArrayList<>();
+		for (CognitiveRadio r : radios) {
+			Document radioDoc = new Document();
+			radioDoc
+				.append("radio", radios.indexOf(r))
+				.append("accessDecisions", r.getAccessDecisions())
+				.append("utilities", r.getUtilities())
+				.append("regrets", r.getRegrets())
+				.append("demand", r.getDemand())
+				.append("contentions", r.getContentions())
+				.append("utilityFunction", r.getUtilityFunction().getType())
+				.append("rates", r.getUtilityFunction().getRates())
+				.append("strategy", r.getStrategy().toString());
+			
+			radioDocs.add(radioDoc);
+		}
+
+		// .append("collisions", collisions.entrySet().stream().filter(c -> c.getKey().contains(phase)).collect(Collectors.toList()))
+		phaseDoc
+			.append("radios", radioDocs);
 		
+		phases.add(phaseDoc);
 	}
 	
 	/**
@@ -286,7 +385,7 @@ public class CRSystem {
 	 */
 	private int findMinIndex(List<Double> backoffTimes) {
 		if (backoffTimes.size() == 1) {
-			out.println("NO COLLISION - 1 user");
+			System.out.println("NO COLLISION - 1 user");
 			return 0;
 		}
 		
@@ -294,11 +393,11 @@ public class CRSystem {
 		Collections.sort(sortedBackOffs);
 		
 		if (sortedBackOffs.get(0).equals(Double.NaN)) {
-			out.println("NO COLLISION - No radios attempt to access the channel!");
+			System.out.println("NO COLLISION - No radios attempt to access the channel!");
 			return -2;
 		}
 		else if (sortedBackOffs.get(1).equals(Double.NaN)) {
-			out.println("NO COLLISION - Only one radio attempts to access the channel!");
+			System.out.println("NO COLLISION - Only one radio attempts to access the channel!");
 			return backoffTimes.indexOf(sortedBackOffs.get(0));
 		}
 		
@@ -306,11 +405,11 @@ public class CRSystem {
 		int min2Index = backoffTimes.indexOf(sortedBackOffs.get(1));
 		
 		if (backoffTimes.get(minIndex) + UtilityConstants.MODE_SWITCH_TIME < backoffTimes.get(min2Index)) {
-			out.println("NO COLLISION - " + ListUtility.formatDoubleList(backoffTimes, b -> String.format("%.3f", b)));
+			System.out.println("NO COLLISION - " + ListUtility.formatDoubleList(backoffTimes, b -> String.format("%.3f", b)));
 			return minIndex;
 		}
 		
-		out.println("COLLISION - 1st backoff: " + String.format("%.3f", backoffTimes.get(minIndex)) + 
+		System.out.println("COLLISION - 1st backoff: " + String.format("%.3f", backoffTimes.get(minIndex)) + 
 				", 2nd backoff: " + String.format("%.3f", backoffTimes.get(min2Index)));
 		return -1;
 	}
@@ -335,35 +434,23 @@ public class CRSystem {
 			System.out.print("Strategy of user " + (i + 1) + " (1 - regret tracking, 2 - max utility, 3 - random): ");
 			setStrategy(crb, scanner.nextInt());
 			
+			// get and set utility function
+			System.out.print("Utility function of user " + (i + 1) + " (1 - competitive, 2 - mixed): ");
+			setUtilityFunction(crb, scanner.nextInt());
+			
 			System.out.println();
 			
 			// captureProbabilities
-			List<List<Double>> captureProbabilities = new ArrayList<>(channelNumber);
-			for (int j = 0; j < channelNumber; j++) {
-				captureProbabilities.add(new ArrayList<>(UtilityConstants.NUMBER_OF_SUBSLOTS));
-			}
-			crb.setCaptureProbabilities(captureProbabilities);
+			crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
 			
 			// captured
-			List<List<Boolean>> captured = new ArrayList<>(channelNumber);
-			for (int j = 0; j < channelNumber; j++) {
-				captured.add(new ArrayList<>(UtilityConstants.NUMBER_OF_SUBSLOTS));
-			}
-			crb.setCaptured(captured);
+			crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
 			
 			// contentions
-			List<List<Double>> contentions = new ArrayList<>(strategySpaceSize);
-			for (int j = 0; j < CognitiveRadio.getStrategySpace().size(); j++) {
-				contentions.add(new ArrayList<>(channelNumber));
-			}
-			crb.setContentions(contentions);
+			crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
 			
 			// utilities
-			List<Double> utilities = new ArrayList<>(strategySpaceSize);
-			for (int j = 0; j < CognitiveRadio.getStrategySpace().size(); j++) {
-				utilities.add(0.0);
-			}
-			crb.setUtilities(utilities);
+			crb.setUtilities(ListUtility.fillListWithNValues(0.0, strategySpaceSize));
 			
 			// regrets
 			crb.setRegrets(new ArrayList<>(strategySpaceSize));
@@ -371,9 +458,9 @@ public class CRSystem {
 			radios.add(crb.build());
 		}	
 	}
-	
+
 	/**
-	 * Setting initial parameters of Channel entities.
+	 * Sets initial parameters of Channel entities.
 	 * 
 	 * @param n - number of channels to initialize
 	 */
@@ -401,14 +488,15 @@ public class CRSystem {
 	 * 
 	 * @param n
 	 */
-	private void initLog(int n) {
+	private String initLog(int n) {
+		String fileName = "simulation_" + new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+
 		if (n == 1) {
 			out = System.out;
 		}
 		else if (n == 2) {
 			try {
-				String date = new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
-				out = new PrintStream(new File("C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\log\\simulation_" + date + ".txt"));
+				out = new PrintStream(new File("C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\log\\" + fileName + ".txt"));	
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -416,6 +504,34 @@ public class CRSystem {
 		else {
 			throw new IllegalArgumentException("Wrong logging output!");
 		}
+
+		return fileName;
+	}
+	
+	/**
+	 * Sets the utiliti function of the given user.
+	 * 
+	 * @param crb
+	 * @param n
+	 */
+	private void setUtilityFunction(CognitiveRadioBuilder crb, int n) {
+		if (n == 1) {
+			crb.setUtilityFunction(new CompetitiveUtilityFunction());
+		}
+		else if (n == 2) {
+			System.out.print("Rate for the competitive part of the utility function: ");
+			double rate1 = scanner.nextDouble();
+			System.out.print("Rate for the overtransmission penalty: ");
+			double rate2 = scanner.nextDouble();
+			System.out.print("Rate for the collision penalty: ");
+			double rate3 = scanner.nextDouble();
+			
+			crb.setUtilityFunction(new MixedUtilityFunction(rate1, rate2, rate3));
+		}
+		else {
+			throw new IllegalArgumentException("Choose 1 - competitive, or 2 - mixed to set utility function!");
+		}
+		
 	}
 	
 	/**
@@ -457,11 +573,13 @@ public class CRSystem {
 		}
 	}
 	
+	/**
+	 * Clears the 2-dimensional lists of the given radio.
+	 * @param radio
+	 */
 	private static void clearRadio(CognitiveRadio radio) {
 		radio.getCaptured().stream().forEach(List::clear);
 		radio.getCaptureProbabilities().stream().forEach(List::clear);
-		radio.getContentions().stream().forEach(List::clear);
-		//radio.getUtilities().clear();
 	}
 }
 

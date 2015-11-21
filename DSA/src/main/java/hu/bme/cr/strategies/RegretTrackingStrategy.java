@@ -139,6 +139,6 @@ public class RegretTrackingStrategy implements IStrategy {
 
 	@Override
 	public String toString() {
-		return "Regret tracking strategy";
+		return "RegretTracking";
 	}
 }

@@ -6,6 +6,7 @@ import java.util.List;
 import hu.bme.cr.strategies.IStrategy;
 import hu.bme.cr.strategies.StrategyParameters;
 import hu.bme.cr.uf.IUtilityFunction;
+import hu.bme.cr.uf.UtilityFunctionParameters;
 
 /**
  * 
@@ -129,13 +130,21 @@ public class CognitiveRadio {
 	}
 	
 	// TODO
-	public void playSetPhase(StrategyParameters params) {
-		strategy.decideInSetPhase(params);
+	public void playSetPhase() {
+		StrategyParameters output = strategy.decideInSetPhase(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0)));
+		this.accessDecisions = output.getStrategyIndexes();
+		this.regrets = output.getRegrets();
 	}
 	
 	// TODO
-	public void play(StrategyParameters params) {
-		strategy.decide(params);
+	public void playDecidePhase() {
+		StrategyParameters output = strategy.decide(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0)));
+		this.accessDecisions = output.getStrategyIndexes();
+		this.regrets = output.getRegrets();
+	}
+	
+	public double calculateUtility(UtilityFunctionParameters params) {
+		return utilityFunction.calculateUtility(params);
 	}
 	
 	/*

@@ -28,6 +28,16 @@ public class UtilityConstants {
 	/**
 	 * The number of CSMA subslots.
 	 */
-	public static final int NUMBER_OF_SUBSLOTS = 10;
+	public static final int NUMBER_OF_SUBSLOTS = 5;
+	
+	/*
+	 * Step size between the rates of the utility function.
+	 */
+	public static final double RATE = 0.2;
+	
+	/*
+	 * Number of periods to play normal game phase.
+	 */
+	public static final int ROUNDS = 25;
 
 }

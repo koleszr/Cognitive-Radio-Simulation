@@ -1,5 +1,6 @@
 package hu.bme.cr.uf;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static hu.bme.cr.utilities.UtilityConstants.*;
@@ -13,12 +14,6 @@ import static hu.bme.cr.utilities.UtilityConstants.*;
  * utility independently from others. 
  */
 public class CompetitiveUtilityFunction implements IUtilityFunction {
-	
-	private UtilityFunctionParameters params;
-	
-	public CompetitiveUtilityFunction(UtilityFunctionParameters params) {
-		this.params = params;
-	}
 
 	/**
 	 * Calculates the payoff of a selfish user.
@@ -26,7 +21,7 @@ public class CompetitiveUtilityFunction implements IUtilityFunction {
 	 * @throws IllegalArgumentException - sizes of the lists from params are not equal
 	 * @return payoff of the ith user
 	 */
-	public double calculateUtility() throws IllegalArgumentException {
+	public double calculateUtility(UtilityFunctionParameters params) throws IllegalArgumentException {
 		List<Boolean> accessDecisions = params.getAccessDecisions();
 		List<Double> contentions = params.getContentions();
 		List<Double> transmissionRates = params.getTransMissionRates();
@@ -47,6 +42,16 @@ public class CompetitiveUtilityFunction implements IUtilityFunction {
 		}
 		
 		return Math.min(competitiveElement, 1.0);
+	}
+
+	@Override
+	public String getType() {
+		return "Competitive";
+	}
+
+	@Override
+	public List<Double> getRates() {
+		return Arrays.asList(1.0, 0.0, 0.0);
 	}
 
 }

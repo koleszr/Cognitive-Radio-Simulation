@@ -23,6 +23,6 @@ public class RandomStrategy implements IStrategy {
 
 	@Override
 	public String toString() {
-		return "Random strategy";
+		return "Random";
 	}
 }

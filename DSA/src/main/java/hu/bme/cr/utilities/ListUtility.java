@@ -10,6 +10,10 @@ import java.util.stream.Collectors;
 
 public class ListUtility {
 	
+	private ListUtility() {
+		
+	}
+	
 	public static List<String> formatDoubleList(List<Double> doubles, Function<Double, String> f) {
 		return doubles.stream().map(f).collect(Collectors.toList());
 	}
@@ -39,5 +43,25 @@ public class ListUtility {
 		}
 		
 		return indexes;
+	}
+	
+	public static <T> List<List<T>> getInitial2DList(Class<T> cls, int x, int y) {
+		List<List<T>> result = new ArrayList<>(x);
+		
+		for (int i = 0; i < x; i++) {
+			result.add(new ArrayList<>(y));
+		}
+		
+		return result;
+	}
+	
+	public static <T> List<T> fillListWithNValues(T value, int n) {
+		List<T> result = new ArrayList<>(n);
+		
+		for (int j = 0; j < n; j++) {
+			result.add(value);
+		}
+		
+		return result;
 	}
 }

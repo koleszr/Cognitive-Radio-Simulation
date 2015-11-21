@@ -1,5 +1,7 @@
 package hu.bme.cr.uf;
 
+import java.util.List;
+
 /**
  * 
  * @author Zoltán Koleszár
@@ -9,5 +11,9 @@ package hu.bme.cr.uf;
  */
 public interface IUtilityFunction {
 	
-	double calculateUtility();
+	double calculateUtility(UtilityFunctionParameters params);
+	
+	String getType();
+	
+	List<Double> getRates();
 }

@@ -34,7 +34,7 @@ public class MaxUtilityStrategy implements IStrategy {
 	
 	@Override
 	public String toString() {
-		return "Max utility strategy";
+		return "MaxUtility";
 	}
 
 }

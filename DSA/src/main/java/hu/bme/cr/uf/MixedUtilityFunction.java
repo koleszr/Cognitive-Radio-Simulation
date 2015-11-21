@@ -3,6 +3,7 @@ package hu.bme.cr.uf;
 import static hu.bme.cr.utilities.UtilityConstants.MAX_BACKOFF;
 import static hu.bme.cr.utilities.UtilityConstants.MODE_SWITCH_TIME;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -21,14 +22,16 @@ import java.util.List;
  */
 public class MixedUtilityFunction implements IUtilityFunction {
 	
-	private UtilityFunctionParameters params;
+	private double rate1;
 	
-	public MixedUtilityFunction() {
+	private double rate2;
 
-	}
+	private double rate3;
 	
-	public MixedUtilityFunction(UtilityFunctionParameters params) {
-		this.params = params; 
+	public MixedUtilityFunction(double rate1, double rate2, double rate3) {
+		this.rate1 = rate1;
+		this.rate2 = rate2;
+		this.rate3 = rate3;
 	}
 
 	/**
@@ -39,14 +42,11 @@ public class MixedUtilityFunction implements IUtilityFunction {
 	 * 
 	 * @return payoff of the ith user
 	 */
-	public double calculateUtility() {
-		double rate1 = params.getRate1();
-		double rate2 = params.getRate2();
-		double rate3 = params.getRate3();
+	public double calculateUtility(UtilityFunctionParameters params) {
 		
-		return Math.max(rate1 * calculateSelfishInterest()
-				+ rate2 * calculateTransmissionPenalty()
-				+ rate3 * calculateCollisionPenalty(), 
+		return Math.max(rate1 * calculateSelfishInterest(params)
+				+ rate2 * calculateTransmissionPenalty(params)
+				+ rate3 * calculateCollisionPenalty(params), 
 				0);
 	}
 	
@@ -56,7 +56,7 @@ public class MixedUtilityFunction implements IUtilityFunction {
 	 * @throws IllegalArgumentException - sizes of the lists from params are not equal
 	 * @return payoff of the ith user
 	 */
-	private double calculateSelfishInterest() {
+	private double calculateSelfishInterest(UtilityFunctionParameters params) {
 		List<Boolean> accessDecisions = params.getAccessDecisions();
 		List<Double> contentions = params.getContentions();
 		List<Double> transmissionRates = params.getTransMissionRates();
@@ -87,7 +87,7 @@ public class MixedUtilityFunction implements IUtilityFunction {
 	 * @throws IllegalArgumentException - sizes of the lists from params are not equal
 	 * @return payoff
 	 */
-	private double calculateTransmissionPenalty() throws IllegalArgumentException {
+	private double calculateTransmissionPenalty(UtilityFunctionParameters params) throws IllegalArgumentException {
 		double demand = params.getDemand();
 		
 		List<Double> transmissionRates = params.getTransMissionRates();
@@ -115,7 +115,7 @@ public class MixedUtilityFunction implements IUtilityFunction {
 	 * @throws IllegalArgumentException - sizes of the lists from params are not equal
 	 * @return payoff
 	 */
-	private double calculateCollisionPenalty() {
+	private double calculateCollisionPenalty(UtilityFunctionParameters params) {
 		List<Double> contentions = params.getContentions();
 		List<Double> transmissionRates = params.getTransMissionRates();
 		List<Double> collisionProbabilities = params.getCollisionProbabilities();
@@ -139,4 +139,15 @@ public class MixedUtilityFunction implements IUtilityFunction {
 		return (-1 / denominator) * penalty;
 	}
 
+	@Override
+	public String getType() {
+		return "Mixed";
+	}
+
+	@Override
+	public List<Double> getRates() {
+		return Arrays.asList(rate1, rate2, rate3);
+	}
+
+	
 }
