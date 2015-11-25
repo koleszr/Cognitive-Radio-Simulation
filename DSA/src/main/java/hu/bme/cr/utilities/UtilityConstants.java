@@ -39,5 +39,12 @@ public class UtilityConstants {
 	 * Number of periods to play normal game phase.
 	 */
 	public static final int ROUNDS = 25;
+	
+	/*
+	 * Path to save the file to.
+	 */
+	public static final String SAVE_PATH = "C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\log\\";
+	
+	public static final String SIMULATION_PARAM_FILE = "C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\";
 
 }

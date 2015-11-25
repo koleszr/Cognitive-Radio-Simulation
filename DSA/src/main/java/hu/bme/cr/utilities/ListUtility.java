@@ -64,4 +64,12 @@ public class ListUtility {
 		
 		return result;
 	}
+	
+	public static void swapToMax(List<Double> doubles, List<Integer> order, int i) {
+		if (Collections.max(doubles).equals(doubles.get(i)) 
+				&& !order.get(0).equals(i)) {
+			
+			Collections.swap(order, 0, order.indexOf(i));
+		}
+	}
 }

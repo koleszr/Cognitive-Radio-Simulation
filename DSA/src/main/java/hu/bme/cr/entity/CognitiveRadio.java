@@ -266,6 +266,22 @@ public class CognitiveRadio {
 		private List<Double> utilities;
 		private List<Double> regrets;
 		
+		public CognitiveRadioBuilder() {
+			
+		}
+		
+		public CognitiveRadioBuilder(CognitiveRadioBuilder builder) {
+			this.demand = builder.demand;
+			this.strategy = builder.strategy;
+			this.utilityFunction = builder.utilityFunction;
+			this.accessDecisions = builder.accessDecisions;
+			this.captureProbabilities = builder.captureProbabilities;
+			this.captured = builder.captured;
+			this.contentions = builder.contentions;
+			this.utilities = builder.utilities;
+			this.regrets = builder.regrets;
+		}
+		
 		public CognitiveRadioBuilder setDemand(double demand) {
 			this.demand = demand;
 			return this;

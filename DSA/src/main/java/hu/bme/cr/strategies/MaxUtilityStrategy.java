@@ -1,6 +1,7 @@
 package hu.bme.cr.strategies;
 
 import java.util.Collections;
+import java.util.List;
 
 import hu.bme.cr.utilities.ListUtility;
 
@@ -24,7 +25,10 @@ public class MaxUtilityStrategy implements IStrategy {
 	 */
 	@Override
 	public StrategyParameters decideInSetPhase(StrategyParameters params) {
-		return new StrategyParameters(Collections.emptyList(), ListUtility.getIndexesDescending(params.getUtilities()));
+		List<Integer> indexesDescending = ListUtility.getIndexesDescending(params.getUtilities());
+		ListUtility.swapToMax(params.getUtilities(), indexesDescending, params.getStrategyIndex());
+		
+		return new StrategyParameters(Collections.emptyList(), indexesDescending);
 	}
 
 	@Override

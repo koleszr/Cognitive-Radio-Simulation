@@ -34,8 +34,11 @@ public class RegretTrackingStrategy implements IStrategy {
 	public StrategyParameters decideInSetPhase(StrategyParameters params) {
 		// 1. caclculate the instantaneous regret list
 		List<Double> instRegret = calcInstantaneousRegrets(params);	
+		List<Integer> indexesDescending = ListUtility.getIndexesDescending(instRegret);
 		
-		return new StrategyParameters(instRegret, ListUtility.getIndexesDescending(instRegret));
+		ListUtility.swapToMax(instRegret, indexesDescending, params.getStrategyIndex());
+		
+		return new StrategyParameters(instRegret, indexesDescending);
 	}
 
 	/**
@@ -50,18 +53,22 @@ public class RegretTrackingStrategy implements IStrategy {
 		double utilityMin = Collections.min(params.getUtilities());
 		double m = (params.getSize() - 1) * (utilityMax - utilityMin);
 		
-		List<Double> probabilities = new ArrayList<>(params.getRegrets().size());
+		List<Double> updatedRegrets = updateRegret(params);
+		List<Double> probabilities = new ArrayList<>(updatedRegrets.size());
 		
-		for (int i = 0; i < params.getRegrets().size(); i++) {
+		for (int i = 0; i < updatedRegrets.size(); i++) {
 			if (i == params.getStrategyIndex()) {
-				probabilities.add(1 - (calcSameStPr(params) / m));
+				probabilities.add(1 - (calcSameStPr(updatedRegrets, params.getStrategyIndex()) / m));
 			}
 			else {
-				probabilities.add(calcDiffStPr(params, i) / m);
+				probabilities.add(calcDiffStPr(updatedRegrets, i) / m);
 			}
 		}
 		
-		return new StrategyParameters(updateRegret(params), ListUtility.getIndexesDescending(probabilities));
+		List<Integer> indexesDescending = ListUtility.getIndexesDescending(probabilities);
+		ListUtility.swapToMax(probabilities, indexesDescending, params.getStrategyIndex());
+		
+		return new StrategyParameters(updatedRegrets, indexesDescending);
 	}
 	
 	/**
@@ -87,9 +94,9 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return
 	 */
-	private double calcSameStPr(StrategyParameters params) {
-		List<Double> regrets = new ArrayList<>(params.getRegrets());
-		regrets.remove(params.getStrategyIndex());
+	private double calcSameStPr(List<Double> oldRegrets, int strategyIndex) {
+		List<Double> regrets = new ArrayList<>(oldRegrets);
+		regrets.remove(strategyIndex);
 		regrets = regrets
 					.stream()
 					.filter(p -> p > 0.0)
@@ -110,8 +117,8 @@ public class RegretTrackingStrategy implements IStrategy {
 	 * 
 	 * @return
 	 */
-	private double calcDiffStPr(StrategyParameters params, int i) {
-		return Math.max(0, params.getRegrets().get(i));
+	private double calcDiffStPr(List<Double> regrets, int i) {
+		return Math.max(0, regrets.get(i));
 	}
 	
 	/**

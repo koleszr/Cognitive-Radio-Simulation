@@ -51,7 +51,7 @@ public class CRSystem {
 	
 	private PrintStream out;
 	
-	private Scanner scanner = new Scanner(System.in);
+	private Scanner scanner;
 	
 	private int strategySpaceSize;
 	
@@ -60,6 +60,16 @@ public class CRSystem {
 		ds = new DataStore();
 		doc = new Document();
 		phases = new ArrayList<>();
+		scanner = new Scanner(System.in);
+	}
+	
+	public CRSystem(String simulationParams) {
+		collisions = new HashMap<>(27);
+		ds = new DataStore();
+		doc = new Document();
+		phases = new ArrayList<>();
+		scanner = new Scanner(simulationParams);
+		CognitiveRadio.getStrategySpace().clear();
 	}
 
 	/*
@@ -93,17 +103,17 @@ public class CRSystem {
 		}
 		
 		System.out.print("Where should I log? (1 - console, 2 - in text file): ");
-		String fileName = initLog(scanner.nextInt());
+		String fileName = initLog(Integer.parseInt(scanner.nextLine()));
 	
 		// read the number of channels and set params
 		System.out.print("Number of channels: ");
-		int channelNumber = scanner.nextInt();
+		int channelNumber = Integer.valueOf(scanner.nextLine());
 		
 		initChannels(channelNumber);
 		
 		// read the number of channels that the users can access
 		System.out.print("Maximum number of channels that users can use: ");
-		int maxChannels = scanner.nextInt();
+		int maxChannels = Integer.valueOf(scanner.nextLine());
 		System.out.println();
 		
 		CognitiveRadio.setMaxChannels(maxChannels);
@@ -114,7 +124,7 @@ public class CRSystem {
 		
 		// read the number of cognitive radio devices and set params
 		System.out.print("Number of cognitive radio devices: ");
-		int radioNumber = scanner.nextInt();
+		int radioNumber = Integer.valueOf(scanner.nextLine());
 		
 		initRadios(radioNumber, channelNumber);	
 		
@@ -204,15 +214,20 @@ public class CRSystem {
 	 * "simulations" collection) and by closing output.
 	 */
 	public void endGame() {
+		List<Document> collisionsList = collisions.entrySet().stream().map(c -> new Document().append("name", c.getKey()).append("number", c.getValue())).collect(Collectors.toList());
 		persist(NORMAL_PHASE + "_" + (UtilityConstants.ROUNDS - 1));
-		doc.append("phases", phases);
+		doc.append("phases", phases)
+			.append("collisions", collisionsList);
 		ds.getDocuments().insertOne(doc);
+		ds.getClient().close();
+		
+		System.out.println("End of Simulation");
 		
 		out.println();
 		out.println("***********************");
 		out.println("** End of Simulation **");
 		out.println("***********************");
-		out.close();		
+		out.close();	
 	}
 	
 	/**
@@ -240,8 +255,8 @@ public class CRSystem {
 			collisions.put(key + "_" + s, 0);
 			
 			for (int i = 0; i < channels.size(); i++) {
-				System.out.println();
-				System.out.println("Channel " + (i + 1) + ":");
+				out.println();
+				out.println("Channel " + (i + 1) + ":");
 				
 				for (int j = 0; j < UtilityConstants.NUMBER_OF_SUBSLOTS; j++) {
 					List<Double> backoffTimes = new ArrayList<>(radios.size());
@@ -340,9 +355,9 @@ public class CRSystem {
 			radioDocs.add(radioDoc);
 		}
 
-		// .append("collisions", collisions.entrySet().stream().filter(c -> c.getKey().contains(phase)).collect(Collectors.toList()))
 		phaseDoc
-			.append("radios", radioDocs);
+			.append("radios", radioDocs)
+			.append("phase", phase);
 		
 		phases.add(phaseDoc);
 	}
@@ -385,7 +400,7 @@ public class CRSystem {
 	 */
 	private int findMinIndex(List<Double> backoffTimes) {
 		if (backoffTimes.size() == 1) {
-			System.out.println("NO COLLISION - 1 user");
+			out.println("NO COLLISION - 1 user");
 			return 0;
 		}
 		
@@ -393,11 +408,11 @@ public class CRSystem {
 		Collections.sort(sortedBackOffs);
 		
 		if (sortedBackOffs.get(0).equals(Double.NaN)) {
-			System.out.println("NO COLLISION - No radios attempt to access the channel!");
+			out.println("NO COLLISION - No radios attempt to access the channel!");
 			return -2;
 		}
 		else if (sortedBackOffs.get(1).equals(Double.NaN)) {
-			System.out.println("NO COLLISION - Only one radio attempts to access the channel!");
+			out.println("NO COLLISION - Only one radio attempts to access the channel!");
 			return backoffTimes.indexOf(sortedBackOffs.get(0));
 		}
 		
@@ -405,11 +420,11 @@ public class CRSystem {
 		int min2Index = backoffTimes.indexOf(sortedBackOffs.get(1));
 		
 		if (backoffTimes.get(minIndex) + UtilityConstants.MODE_SWITCH_TIME < backoffTimes.get(min2Index)) {
-			System.out.println("NO COLLISION - " + ListUtility.formatDoubleList(backoffTimes, b -> String.format("%.3f", b)));
+			out.println("NO COLLISION - " + ListUtility.formatDoubleList(backoffTimes, b -> String.format("%.3f", b)));
 			return minIndex;
 		}
 		
-		System.out.println("COLLISION - 1st backoff: " + String.format("%.3f", backoffTimes.get(minIndex)) + 
+		out.println("COLLISION - 1st backoff: " + String.format("%.3f", backoffTimes.get(minIndex)) + 
 				", 2nd backoff: " + String.format("%.3f", backoffTimes.get(min2Index)));
 		return -1;
 	}
@@ -423,40 +438,66 @@ public class CRSystem {
 	private void initRadios(int n, int channelNumber) {
 		radios = new ArrayList<>(n);
 		
-		for (int i = 0; i < n; i++) {
-			CognitiveRadioBuilder crb = new CognitiveRadioBuilder();
+		System.out.print("Same parameters on every radio? (y/n) ");
+		if ("y".equals(scanner.nextLine())) {
+			CognitiveRadioBuilder crb = initRadioParameters(channelNumber);
 			
-			// get and set demand
-			System.out.print("Demand of user " + (i + 1) + " in bit/slot: ");
-			crb.setDemand(scanner.nextDouble());
-			
-			// get and set strategy
-			System.out.print("Strategy of user " + (i + 1) + " (1 - regret tracking, 2 - max utility, 3 - random): ");
-			setStrategy(crb, scanner.nextInt());
-			
-			// get and set utility function
-			System.out.print("Utility function of user " + (i + 1) + " (1 - competitive, 2 - mixed): ");
-			setUtilityFunction(crb, scanner.nextInt());
-			
-			System.out.println();
-			
-			// captureProbabilities
-			crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
-			
-			// captured
-			crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
-			
-			// contentions
-			crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
-			
-			// utilities
-			crb.setUtilities(ListUtility.fillListWithNValues(0.0, strategySpaceSize));
-			
-			// regrets
-			crb.setRegrets(new ArrayList<>(strategySpaceSize));
-			
-			radios.add(crb.build());
-		}	
+			for (int i = 0; i < n; i++) {
+				// captureProbabilities
+				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				
+				// captured
+				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				
+				// contentions
+				crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
+				
+				// utilities
+				crb.setUtilities(ListUtility.fillListWithNValues(0.0, strategySpaceSize));
+				
+				// regrets
+				crb.setRegrets(new ArrayList<>(strategySpaceSize));
+				
+				radios.add(crb.build());				
+			}
+		}
+		else {
+			for (int i = 0; i < n; i++) {
+				CognitiveRadioBuilder crb = new CognitiveRadioBuilder();
+				
+				// get and set demand
+				System.out.print("Demand of user " + (i + 1) + " in bit/slot: ");
+				crb.setDemand(scanner.nextDouble());
+				
+				// get and set strategy
+				System.out.print("Strategy of user " + (i + 1) + " (1 - regret tracking, 2 - max utility, 3 - random): ");
+				setStrategy(crb, scanner.nextInt());
+				
+				// get and set utility function
+				System.out.print("Utility function of user " + (i + 1) + " (1 - competitive, 2 - mixed): ");
+				setUtilityFunction(crb, scanner.nextInt());
+				
+				System.out.println();
+				
+				// captureProbabilities
+				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				
+				// captured
+				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				
+				// contentions
+				crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
+				
+				// utilities
+				crb.setUtilities(ListUtility.fillListWithNValues(0.0, strategySpaceSize));
+				
+				// regrets
+				crb.setRegrets(new ArrayList<>(strategySpaceSize));
+				
+				radios.add(crb.build());
+			}				
+		}
+		
 	}
 
 	/**
@@ -467,20 +508,33 @@ public class CRSystem {
 	private void initChannels(int n) {
 		channels = new ArrayList<>(n);
 		
-		for (int i = 0; i < n; i++) {
+		System.out.print("Same parameters on every channel? (y/n) ");
+		if ("y".equals(scanner.nextLine())) {
 			// get transmission rate
-			System.out.print("Transmission rate of channel " + (i + 1) + ": ");
-			double transmissionRate = scanner.nextDouble();
+			System.out.print("Transmission rate of the channels: ");
+			double transmissionRate = Double.valueOf(scanner.nextLine());
 			
-			// get frequency 
-			System.out.print("Frequency of channel " + (i + 1) + ": ");
-			double frequency = scanner.nextDouble();
-			
-			System.out.println();
-
-			// set Channel parameters and add it to channels list 
-			channels.add(new Channel(transmissionRate, frequency, false));
+			for (int i = 0; i < n; i++) {
+				channels.add(new Channel(transmissionRate, 0.0, false));
+			}
 		}
+		else {
+			for (int i = 0; i < n; i++) {
+				// get transmission rate
+				System.out.print("Transmission rate of channel " + (i + 1) + ": ");
+				double transmissionRate = Double.valueOf(scanner.nextLine());
+				
+				// get frequency 
+//			System.out.print("Frequency of channel " + (i + 1) + ": ");
+//			double frequency = scanner.nextDouble();
+				
+				System.out.println();
+				
+				// set Channel parameters and add it to channels list 
+				channels.add(new Channel(transmissionRate, 0.0, false));
+			}			
+		}
+		
 	}
 	
 	/**
@@ -489,14 +543,24 @@ public class CRSystem {
 	 * @param n
 	 */
 	private String initLog(int n) {
-		String fileName = "simulation_" + new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());
+		System.out.print("Use automatic file naming? (y/n) ");
+		
+		String fileName = null;
+		
+		if ("y".equals(scanner.nextLine())) {
+			fileName = "simulation_" + new SimpleDateFormat("yyyy_MM_dd_HH_mm_ss").format(new Date());			
+		}
+		else {
+			System.out.print("Name of the file: ");
+			fileName = scanner.nextLine();
+		}
 
 		if (n == 1) {
 			out = System.out;
 		}
 		else if (n == 2) {
 			try {
-				out = new PrintStream(new File("C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\log\\" + fileName + ".txt"));	
+				out = new PrintStream(new File(UtilityConstants.SAVE_PATH + fileName + ".txt"));	
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -506,6 +570,25 @@ public class CRSystem {
 		}
 
 		return fileName;
+	}
+	
+	private CognitiveRadioBuilder initRadioParameters(int channelNumber) {
+		CognitiveRadioBuilder crb = new CognitiveRadioBuilder();
+		// get and set demand
+		System.out.print("Demand of users in bit/slot: ");
+		crb.setDemand(scanner.nextDouble());
+		
+		// get and set strategy
+		System.out.print("Strategy of users (1 - regret tracking, 2 - max utility, 3 - random): ");
+		setStrategy(crb, scanner.nextInt());
+		
+		// get and set utility function
+		System.out.print("Utility function of users (1 - competitive, 2 - mixed): ");
+		setUtilityFunction(crb, scanner.nextInt());
+		
+		System.out.println();
+		
+		return crb;
 	}
 	
 	/**
