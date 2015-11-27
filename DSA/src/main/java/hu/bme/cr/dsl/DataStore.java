@@ -9,7 +9,7 @@ import com.mongodb.client.MongoDatabase;
 public class DataStore {
 
 	private static final String THESIS_DB = "thesis";
-	private static final String SIMULATIONS_COLLECTION = "simulations";
+	private static final String SIMULATIONS_COLLECTION = "longSimulations";
 	
 	private MongoClient client;
 	private MongoDatabase db;

@@ -56,7 +56,7 @@ public class CRSystem {
 	private int strategySpaceSize;
 	
 	public CRSystem() {
-		collisions = new HashMap<>(27);
+		collisions = new HashMap<>(UtilityConstants.ROUNDS + 2);
 		ds = new DataStore();
 		doc = new Document();
 		phases = new ArrayList<>();
@@ -64,7 +64,7 @@ public class CRSystem {
 	}
 	
 	public CRSystem(String simulationParams) {
-		collisions = new HashMap<>(27);
+		collisions = new HashMap<>(UtilityConstants.ROUNDS + 2);
 		ds = new DataStore();
 		doc = new Document();
 		phases = new ArrayList<>();
@@ -205,7 +205,7 @@ public class CRSystem {
 		out.println("** NORMAL PHASE, ROUND " + r + "**");
 		out.println("***************************");
 		
-		play(NORMAL_PHASE + "_" + r);
+		play(NORMAL_PHASE + "_" + String.format("%03d", r));
 	}
 	
 	/**
