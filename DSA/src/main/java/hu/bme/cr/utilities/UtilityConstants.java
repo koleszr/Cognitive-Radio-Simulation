@@ -25,26 +25,9 @@ public class UtilityConstants {
 	 */
 	public static final double MODE_SWITCH_TIME = 0.05;
 	
-	/**
-	 * The number of CSMA subslots.
-	 */
-	public static final int NUMBER_OF_SUBSLOTS = 5;
-	
 	/*
 	 * Step size between the rates of the utility function.
 	 */
 	public static final double RATE = 0.2;
-	
-	/*
-	 * Number of periods to play normal game phase.
-	 */
-	public static final int ROUNDS = 25;
-	
-	/*
-	 * Path to save the file to.
-	 */
-	public static final String SAVE_PATH = "C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\log\\";
-	
-	public static final String SIMULATION_PARAM_FILE = "C:\\Users\\Zoltán Koleszár\\Documents\\Diplomaterv\\";
 
 }

@@ -2,6 +2,8 @@ package hu.bme.cr;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -10,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -55,19 +58,21 @@ public class CRSystem {
 	
 	private int strategySpaceSize;
 	
-	public CRSystem() {
-		collisions = new HashMap<>(UtilityConstants.ROUNDS + 2);
+	private Properties props;
+	
+	{
+		initProperties();
+		collisions = new HashMap<>(Integer.valueOf(props.getProperty("ROUNDS")) + 2);
 		ds = new DataStore();
 		doc = new Document();
 		phases = new ArrayList<>();
+	}
+	
+	public CRSystem() {
 		scanner = new Scanner(System.in);
 	}
 	
 	public CRSystem(String simulationParams) {
-		collisions = new HashMap<>(UtilityConstants.ROUNDS + 2);
-		ds = new DataStore();
-		doc = new Document();
-		phases = new ArrayList<>();
 		scanner = new Scanner(simulationParams);
 		CognitiveRadio.getStrategySpace().clear();
 	}
@@ -129,7 +134,7 @@ public class CRSystem {
 		initRadios(radioNumber, channelNumber);	
 		
 		doc.append("name", fileName)
-			.append("subslots", UtilityConstants.NUMBER_OF_SUBSLOTS)
+			.append("subslots", Integer.valueOf(props.getProperty("SUBSLOTS")))
 			.append("radios", radios.size())
 			.append("channels", channels.size())
 			.append("strategySpaceSize", strategySpaceSize);
@@ -215,7 +220,7 @@ public class CRSystem {
 	 */
 	public void endGame() {
 		List<Document> collisionsList = collisions.entrySet().stream().map(c -> new Document().append("name", c.getKey()).append("number", c.getValue())).collect(Collectors.toList());
-		persist(NORMAL_PHASE + "_" + (UtilityConstants.ROUNDS - 1));
+		persist(NORMAL_PHASE + "_" + (Integer.valueOf(props.getProperty("ROUNDS")) - 1));
 		doc.append("phases", phases)
 			.append("collisions", collisionsList);
 		ds.getDocuments().insertOne(doc);
@@ -258,7 +263,7 @@ public class CRSystem {
 				out.println();
 				out.println("Channel " + (i + 1) + ":");
 				
-				for (int j = 0; j < UtilityConstants.NUMBER_OF_SUBSLOTS; j++) {
+				for (int j = 0; j < Integer.valueOf(props.getProperty("SUBSLOTS")); j++) {
 					List<Double> backoffTimes = new ArrayList<>(radios.size());
 					
 					for (CognitiveRadio r : radios) {
@@ -444,10 +449,10 @@ public class CRSystem {
 			
 			for (int i = 0; i < n; i++) {
 				// captureProbabilities
-				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, Integer.valueOf(props.getProperty("SUBSLOTS"))));
 				
 				// captured
-				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, Integer.valueOf(props.getProperty("SUBSLOTS"))));
 				
 				// contentions
 				crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
@@ -480,10 +485,10 @@ public class CRSystem {
 				System.out.println();
 				
 				// captureProbabilities
-				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				crb.setCaptureProbabilities(ListUtility.getInitial2DList(Double.class, channelNumber, Integer.valueOf(props.getProperty("SUBSLOTS"))));
 				
 				// captured
-				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, UtilityConstants.NUMBER_OF_SUBSLOTS));
+				crb.setCaptured(ListUtility.getInitial2DList(Boolean.class, channelNumber, Integer.valueOf(props.getProperty("SUBSLOTS"))));
 				
 				// contentions
 				crb.setContentions(ListUtility.getInitial2DList(Double.class, strategySpaceSize, channelNumber));
@@ -560,7 +565,7 @@ public class CRSystem {
 		}
 		else if (n == 2) {
 			try {
-				out = new PrintStream(new File(UtilityConstants.SAVE_PATH + fileName + ".txt"));	
+				out = new PrintStream(new File(props.getProperty("SAVE_PATH") + fileName + ".txt"));	
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 			}
@@ -589,6 +594,17 @@ public class CRSystem {
 		System.out.println();
 		
 		return crb;
+	}
+	
+	private void initProperties() {
+    	ClassLoader loader = Thread.currentThread().getContextClassLoader();
+    	props = new Properties();
+    	
+    	try(InputStream stream = loader.getResourceAsStream("simulation.properties")) {
+    		props.load(stream);
+    	} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**
