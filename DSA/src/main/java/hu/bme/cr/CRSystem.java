@@ -36,29 +36,29 @@ import hu.bme.cr.utilities.UtilityConstants;
 
 public class CRSystem {
 	
-	private static final String INIT_PHASE = "INIT_PHASE";
-	private static final String SET_PHASE = "SET_PHASE";
-	private static final String NORMAL_PHASE = "NORMAL_PHASE";
+	protected static final String INIT_PHASE = "INIT_PHASE";
+	protected static final String SET_PHASE = "SET_PHASE";
+	protected static final String NORMAL_PHASE = "NORMAL_PHASE";
 	
-	private DataStore ds;
+	protected DataStore ds;
 	
 	private Document doc;
 	
 	private List<Document> phases;
 
-	private List<CognitiveRadio> radios;
+	protected List<CognitiveRadio> radios;
 	
-	private List<Channel> channels;
+	protected List<Channel> channels;
 	
-	private Map<String, Integer> collisions;
+	protected Map<String, Integer> collisions;
 	
-	private PrintStream out;
+	protected PrintStream out;
 	
-	private Scanner scanner;
+	protected Scanner scanner;
 	
-	private int strategySpaceSize;
+	protected int strategySpaceSize;
 	
-	private Properties props;
+	protected Properties props;
 	
 	{
 		initProperties();
@@ -96,17 +96,17 @@ public class CRSystem {
 	public void setChannels(List<Channel> channels) {
 		this.channels = channels;
 	}
-	
+
 	/**
 	 * Initialize the cognitive radio system.
 	 */
-	public void init() {
-		try {
-			Thread.sleep(100);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	public void init() {		
+		String fileName = initSystem();
 		
+		initDoc(fileName);
+	}
+	
+	protected String initSystem() {
 		System.out.print("Where should I log? (1 - console, 2 - in text file): ");
 		String fileName = initLog(Integer.parseInt(scanner.nextLine()));
 	
@@ -133,6 +133,10 @@ public class CRSystem {
 		
 		initRadios(radioNumber, channelNumber);	
 		
+		return fileName;
+	}
+	
+	private void initDoc(String fileName) {
 		doc.append("name", fileName)
 			.append("subslots", Integer.valueOf(props.getProperty("SUBSLOTS")))
 			.append("radios", radios.size())
@@ -251,7 +255,8 @@ public class CRSystem {
 	 * 
 	 * @param key - key to store the number of collisions
 	 */
-	private void play(String key) {
+	protected void play(String key) {
+		
 		// play every strategy
 		// 1. Channel access in each subslot by generating a random backoff time.
 		// 2. Calculate channel access probability by backoff time and add it to CognitiveRadios captureProbabilities list.
@@ -269,7 +274,7 @@ public class CRSystem {
 					for (CognitiveRadio r : radios) {
 						
 						// if r can access given channel than we generate a backoff time 
-						if (CognitiveRadio.getStrategySpace().get(r.getAccessDecisions().get(s)).get(i)) {
+						if (CognitiveRadio.getStrategySpace().get(r.getAccessDecisions().get(s)).get(i) == true) {
 							double backOff = CognitiveRadioUtility.generateBackOff(UtilityConstants.MAX_BACKOFF);
 							backoffTimes.add(backOff);
 							
@@ -280,7 +285,7 @@ public class CRSystem {
 							backoffTimes.add(Double.NaN);
 							r.getCaptureProbabilities().get(i).add(0.0);
 						}
-					}
+					}	
 					
 					// check if there was a collision on the channel
 					int minIndex = findMinIndex(backoffTimes);
@@ -292,9 +297,9 @@ public class CRSystem {
 					for (int k = 0; k < radios.size(); k++) {
 						radios.get(k).getCaptured().get(i).add(k == minIndex);
 					}
-				}
+				}				
 			}
-		
+			
 			// 4. Calculate user estimate (contentions) for each CognitiveRadio.
 			// 5. Calculate channel capture probability for each CognitiveRadio using user estimate.
 			// 6. Calculate channel collision probability for each CognitiveRadio using user estimate.
@@ -327,7 +332,6 @@ public class CRSystem {
 				r.getUtilities().set(r.getAccessDecisions().get(s), r.calculateUtility(builder.build()));
 			}
 			
-			
 			// log
 			printCognitiveRadioData(s);
 			out.println("Number of collisions in " + key + "_" + s + " phase: " + collisions.get(key + "_" + s));
@@ -340,7 +344,7 @@ public class CRSystem {
 		}
 	}
 	
-	private void persist(String phase) {
+	protected void persist(String phase) {
 		Document phaseDoc = new Document();
 		
 		List<Document> radioDocs = new ArrayList<>();
@@ -352,7 +356,7 @@ public class CRSystem {
 				.append("utilities", r.getUtilities())
 				.append("regrets", r.getRegrets())
 				.append("demand", r.getDemand())
-				.append("contentions", r.getContentions())
+				.append("contentions", new ArrayList<List<Double>>(r.getContentions()))
 				.append("utilityFunction", r.getUtilityFunction().getType())
 				.append("rates", r.getUtilityFunction().getRates())
 				.append("strategy", r.getStrategy().toString());
@@ -679,6 +683,6 @@ public class CRSystem {
 	private static void clearRadio(CognitiveRadio radio) {
 		radio.getCaptured().stream().forEach(List::clear);
 		radio.getCaptureProbabilities().stream().forEach(List::clear);
-	}
+	}	
 }
 

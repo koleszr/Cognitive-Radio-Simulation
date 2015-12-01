@@ -30,7 +30,7 @@ public class App {
         	autoSimulation();
         }
         else {
-        	CRSystem system = new CRSystem();
+        	CRSystem system = createSimulation();
         	
         	play(system);      	
         }
@@ -54,7 +54,7 @@ public class App {
     	System.out.print("Name of the file to read simulation init params from: ");
     	String fileName = scanner.nextLine();
     	
-    	try (BufferedReader br = new BufferedReader(new FileReader(new File(props.getProperty("SIMULATION_PARAM_FILE") + fileName)))) {
+    	try (BufferedReader br = new BufferedReader(new FileReader(new File(props.getProperty("SIMULATION_PARAM_DIR") + fileName)))) {
     		int n = Integer.valueOf(br.readLine());
     		String line = null;
     		
@@ -68,7 +68,7 @@ public class App {
 				
 				String params = sb.toString();
 				System.out.println(params);
-				CRSystem system = new CRSystem(params);	
+				CRSystem system = createSimulationWithParams(params);
 				
 				play(system);
 			}
@@ -91,5 +91,27 @@ public class App {
     	}
     	
     	system.endGame();  
+    }
+    
+    private static CRSystem createSimulation() {
+    	if (props.getProperty("SIMULATION_MODE").equals("NORMAL")) {
+    		return new CRSystem();
+    	}
+    	else if (props.getProperty("SIMULATION_MODE").equals("CONTENTION")) {
+    		return new CRContentionSimulation();
+    	}
+    	
+    	return null;
+    }
+    
+    private static CRSystem createSimulationWithParams(String params) {
+    	if (props.getProperty("SIMULATION_MODE").equals("NORMAL")) {
+    		return new CRSystem(params);
+    	}
+    	else if (props.getProperty("SIMULATION_MODE").equals("CONTENTION")) {
+    		return new CRContentionSimulation(params);
+    	}
+    	
+    	return null;
     }
 }

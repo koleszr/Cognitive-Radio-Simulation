@@ -1,10 +1,15 @@
 package hu.bme.cr;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import hu.bme.cr.entity.CognitiveRadio;
+import hu.bme.cr.strategies.StrategySpace;
 
 /**
  * 
@@ -43,6 +48,19 @@ public class CRSystemTest {
 		backoffTimes = Arrays.asList(Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
 		
 //		Assert.assertEquals(-2, system.findMinIndex(backoffTimes));
+	}
+	
+	@Test
+	public void testSetCompetingUserNumber() {
+		CRContentionSimulation system = new CRContentionSimulation();
+		
+		for (int i = 1; i <= 2; i++) {
+			List<Boolean> strategies = new ArrayList<>(Collections.nCopies(i, true));
+			strategies.addAll(new ArrayList<>(Collections.nCopies(5 - i, false)));
+			CognitiveRadio.getStrategySpace().addAll(StrategySpace.getStrategySpace(strategies));
+		}
+		
+		system.setCompetingUserNumber();
 	}
  
 }
