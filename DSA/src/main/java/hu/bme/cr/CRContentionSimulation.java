@@ -42,7 +42,7 @@ public class CRContentionSimulation extends CRSystem {
 	 */
 	@Override
 	public void init() {
-		initSystem();
+		docName = initSystem();
 	}
 	
 	/**
@@ -125,7 +125,7 @@ public class CRContentionSimulation extends CRSystem {
 		
 		ds.getDocuments().insertOne(doc);
 	}
-	
+
 	public void setCompetingUserNumber() {
 		competingUsers = new ArrayList<>(radios.size());
 		

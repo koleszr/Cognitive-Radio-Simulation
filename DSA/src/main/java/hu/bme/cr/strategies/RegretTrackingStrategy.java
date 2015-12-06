@@ -18,8 +18,11 @@ public class RegretTrackingStrategy implements IStrategy {
 	
 	private double stepSize;
 	
-	public RegretTrackingStrategy(double stepSize) {
+	private boolean decreasing;
+	
+	public RegretTrackingStrategy(double stepSize, boolean decreasing) {
 		this.stepSize = stepSize;
+		this.decreasing = decreasing;
 	}
 
 	/**
@@ -130,6 +133,10 @@ public class RegretTrackingStrategy implements IStrategy {
 		List<Double> updatedRegrets = new ArrayList<>(params.getRegrets().size());
 		
 		List<Double> instRegrets = calcInstantaneousRegrets(params);
+		
+		if (decreasing) {
+			stepSize = 1 / (1 + params.getRound());
+		}
 		
 		if (params.getRegrets().size() != instRegrets.size()) {
 			throw new IllegalArgumentException("Not equal list sizes!");

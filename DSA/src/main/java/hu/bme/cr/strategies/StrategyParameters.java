@@ -21,6 +21,8 @@ public class StrategyParameters {
 	
 	private int strategyIndex;
 	
+	private int round;
+	
 	public StrategyParameters() {
 		
 	}
@@ -39,11 +41,12 @@ public class StrategyParameters {
 	 * @param strategyIndex
 	 * @param size
 	 */
-	public StrategyParameters(List<Double> utilities, List<Double> regrets, int size, int strategyIndex) {
+	public StrategyParameters(List<Double> utilities, List<Double> regrets, int size, int strategyIndex, int round) {
 		this.utilities = utilities;
 		this.regrets = regrets;
 		this.strategyIndex = strategyIndex;
 		this.size = size;
+		this.round = round;
 	}
 	
 	/**
@@ -102,5 +105,13 @@ public class StrategyParameters {
 
 	public void setStrategyIndex(int strategyIndex) {
 		this.strategyIndex = strategyIndex;
+	}
+
+	public int getRound() {
+		return round;
+	}
+
+	public void setRound(int round) {
+		this.round = round;
 	}
 }

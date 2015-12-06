@@ -131,14 +131,14 @@ public class CognitiveRadio {
 	
 	// TODO
 	public void playSetPhase() {
-		StrategyParameters output = strategy.decideInSetPhase(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0)));
+		StrategyParameters output = strategy.decideInSetPhase(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0), 1));
 		this.accessDecisions = output.getStrategyIndexes();
 		this.regrets = output.getRegrets();
 	}
 	
 	// TODO
-	public void playDecidePhase() {
-		StrategyParameters output = strategy.decide(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0)));
+	public void playDecidePhase(int r) {
+		StrategyParameters output = strategy.decide(new StrategyParameters(utilities, regrets, strategySpace.size(), accessDecisions.get(0), r));
 		this.accessDecisions = output.getStrategyIndexes();
 		this.regrets = output.getRegrets();
 	}

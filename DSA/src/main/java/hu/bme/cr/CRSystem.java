@@ -136,7 +136,7 @@ public class CRSystem {
 		return fileName;
 	}
 	
-	private void initDoc(String fileName) {
+	protected void initDoc(String fileName) {
 		doc.append("name", fileName)
 			.append("subslots", Integer.valueOf(props.getProperty("SUBSLOTS")))
 			.append("radios", radios.size())
@@ -196,7 +196,7 @@ public class CRSystem {
 	 * @param number of the round
 	 */
 	public void playDecidePhase(int r) {
-		radios.stream().forEach(CognitiveRadio::playDecidePhase);
+		radios.stream().forEach(radio -> radio.playDecidePhase(r + 2));
 		radios.stream().forEach(radio -> out.println("Regrets: " + ListUtility.formatDoubleList(radio.getRegrets(), reg -> String.format("%.3f", reg))));
 		
 		if (r == 0) {
@@ -661,7 +661,15 @@ public class CRSystem {
 		// regret tracking algorithm
 		case 1:
 			System.out.print("Stepsize (1 - fix, 2 - decreasing): ");
-			crb.setStrategy(new RegretTrackingStrategy(scanner.nextInt()));
+			int stepSize = scanner.nextInt();
+			
+			if (stepSize == 1) {
+				crb.setStrategy(new RegretTrackingStrategy(0.1, false));				
+			}
+			else {
+				crb.setStrategy(new RegretTrackingStrategy(1, true));
+			}
+			
 			break;
 		// max utility strategy
 		case 2:
